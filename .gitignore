@@ -1,0 +1,39 @@
+# Build output
+build/
+DerivedData/
+
+# Xcode user-specific files
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+
+# Xcode generated files
+*.xcscmblueprint
+*.xccheckout
+
+# Swift Package Manager
+.build/
+.swiftpm/
+*.resolved
+
+# CocoaPods (if used in future)
+Pods/
+Podfile.lock
+
+# Carthage (if used in future)
+Carthage/Build/
+Carthage/Checkouts/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.icloud
+
+# Xcode automatic backups
+*~.nib
+*.moved-aside
+*.orig
+
+# Simulator and device logs
+*.log
