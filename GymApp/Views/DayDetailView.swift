@@ -112,6 +112,7 @@ struct WorkoutDayEditor: View {
     @Bindable var day: WorkoutDay
 
     @State private var activeTimerExercise: WorkoutExercise? = nil
+    @State private var exerciseToEdit: WorkoutExercise? = nil
 
     private var sortedExercises: [WorkoutExercise] {
         day.exercises.sorted { $0.sortOrder < $1.sortOrder }
@@ -166,9 +167,11 @@ struct WorkoutDayEditor: View {
                 ForEach(routineGroups, id: \.name) { group in
                     Section {
                         ForEach(group.exercises) { exercise in
-                            WorkoutExerciseRow(exercise: exercise, onStartTimer: { ex in
-                                activeTimerExercise = ex
-                            })
+                            WorkoutExerciseRow(
+                                exercise: exercise,
+                                onEdit: { ex in exerciseToEdit = ex },
+                                onStartTimer: { ex in activeTimerExercise = ex }
+                            )
                         }
                         .onDelete { offsets in
                             deleteExercises(in: group.exercises, at: offsets)
@@ -180,9 +183,11 @@ struct WorkoutDayEditor: View {
             } else {
                 Section {
                     ForEach(sortedExercises) { exercise in
-                        WorkoutExerciseRow(exercise: exercise, onStartTimer: { ex in
-                            activeTimerExercise = ex
-                        })
+                        WorkoutExerciseRow(
+                            exercise: exercise,
+                            onEdit: { ex in exerciseToEdit = ex },
+                            onStartTimer: { ex in activeTimerExercise = ex }
+                        )
                     }
                     .onDelete { offsets in
                         deleteExercises(in: sortedExercises, at: offsets)
@@ -212,6 +217,9 @@ struct WorkoutDayEditor: View {
         .listStyle(.insetGrouped)
         .sheet(item: $activeTimerExercise) { exercise in
             ExerciseTimerView(exercise: exercise)
+        }
+        .sheet(item: $exerciseToEdit) { exercise in
+            EditWorkoutExerciseView(exercise: exercise)
         }
     }
 
@@ -255,10 +263,11 @@ struct WorkoutDayEditor: View {
 
 struct WorkoutExerciseRow: View {
     let exercise: WorkoutExercise
+    var onEdit: (WorkoutExercise) -> Void
     var onStartTimer: (WorkoutExercise) -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 14) {
+        HStack(alignment: .center, spacing: 12) {
             // Completion toggle
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -280,7 +289,7 @@ struct WorkoutExerciseRow: View {
             }
             .buttonStyle(.plain)
 
-            // Exercise details
+            // Exercise details (tappable to edit)
             VStack(alignment: .leading, spacing: 5) {
                 Text(exercise.name)
                     .font(.headline)
@@ -302,18 +311,34 @@ struct WorkoutExerciseRow: View {
                         .foregroundStyle(Color.accentColor)
                 }
             }
-
-            Spacer()
-
-            // Play button for rest timer
-            Button {
-                onStartTimer(exercise)
-            } label: {
-                Image(systemName: "play.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(Color.accentColor)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onEdit(exercise)
             }
-            .buttonStyle(.plain)
+
+            Spacer(minLength: 4)
+
+            HStack(spacing: 10) {
+                // Edit button
+                Button {
+                    onEdit(exercise)
+                } label: {
+                    Image(systemName: "pencil.circle")
+                        .font(.title2)
+                        .foregroundStyle(Color.secondary)
+                }
+                .buttonStyle(.plain)
+
+                // Play button for rest timer
+                Button {
+                    onStartTimer(exercise)
+                } label: {
+                    Image(systemName: "play.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.vertical, 4)
     }
