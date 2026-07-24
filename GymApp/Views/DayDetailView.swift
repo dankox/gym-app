@@ -11,6 +11,7 @@ struct DayDetailView: View {
     @Query private var workoutDays: [WorkoutDay]
 
     @State private var showRoutinePicker = false
+    @State private var showDeleteConfirmation = false
 
     private var workoutDay: WorkoutDay? {
         workoutDays.first { Calendar.current.isDate($0.date, inSameDayAs: date) }
@@ -34,18 +35,42 @@ struct DayDetailView: View {
                     Button("Close") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showRoutinePicker = true
-                    } label: {
-                        Label(
-                            workoutDay == nil ? "Import Routine" : "Change Routine",
-                            systemImage: "square.and.arrow.down"
-                        )
+                    HStack(spacing: 12) {
+                        if workoutDay != nil {
+                            Button(role: .destructive) {
+                                showDeleteConfirmation = true
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                        }
+                        Button {
+                            showRoutinePicker = true
+                        } label: {
+                            Label(
+                                workoutDay == nil ? "Import Routine" : "Change Routine",
+                                systemImage: "square.and.arrow.down"
+                            )
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showRoutinePicker) {
                 RoutinePickerView(date: date)
+            }
+            .confirmationDialog(
+                "Remove Logged Workout",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    if let day = workoutDay {
+                        modelContext.delete(day)
+                        dismiss()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Are you sure you want to remove the logged workout for this day?")
             }
         }
     }
@@ -83,6 +108,7 @@ struct DayDetailView: View {
 // MARK: - Workout Day Editor (uses @Bindable for notes binding)
 
 struct WorkoutDayEditor: View {
+    @Environment(\.modelContext) private var modelContext
     @Bindable var day: WorkoutDay
 
     private var sortedExercises: [WorkoutExercise] {
@@ -129,6 +155,7 @@ struct WorkoutDayEditor: View {
                     ForEach(sortedExercises) { exercise in
                         WorkoutExerciseRow(exercise: exercise)
                     }
+                    .onDelete(perform: deleteExercises)
                 }
             } header: {
                 exercisesSectionHeader
@@ -164,6 +191,13 @@ struct WorkoutDayEditor: View {
                     .foregroundStyle(completedCount == day.exercises.count ? Color.green : .secondary)
                     .fontWeight(completedCount == day.exercises.count ? .semibold : .regular)
             }
+        }
+    }
+
+    private func deleteExercises(at offsets: IndexSet) {
+        for index in offsets {
+            let exercise = sortedExercises[index]
+            modelContext.delete(exercise)
         }
     }
 }

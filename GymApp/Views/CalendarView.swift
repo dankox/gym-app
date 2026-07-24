@@ -8,6 +8,7 @@ struct CalendarView: View {
     @State private var selectedDate = Date()
     @State private var currentMonth = Date()
     @State private var showDayDetail = false
+    @State private var showDeleteConfirmation = false
 
     private let calendar = Calendar.current
 
@@ -36,6 +37,18 @@ struct CalendarView: View {
             }
             .sheet(isPresented: $showDayDetail) {
                 DayDetailView(date: selectedDate)
+            }
+            .confirmationDialog(
+                "Remove Logged Workout",
+                isPresented: $showDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Remove", role: .destructive) {
+                    deleteWorkoutForSelectedDate()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Are you sure you want to remove the logged workout for \(selectedDate.formatted(.dateTime.weekday(.wide).day().month(.wide)))?")
             }
         }
     }
@@ -137,9 +150,19 @@ struct CalendarView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("View Details") { showDayDetail = true }
-                    .buttonStyle(.borderedProminent)
+                HStack(spacing: 8) {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .buttonStyle(.bordered)
                     .controlSize(.regular)
+
+                    Button("View Details") { showDayDetail = true }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                }
             }
         }
         .padding()
@@ -194,6 +217,12 @@ struct CalendarView: View {
 
     func workoutDayFor(_ date: Date) -> WorkoutDay? {
         workoutDays.first { calendar.isDate($0.date, inSameDayAs: date) }
+    }
+
+    func deleteWorkoutForSelectedDate() {
+        if let day = workoutDayFor(selectedDate) {
+            modelContext.delete(day)
+        }
     }
 
     func previousMonth() {
