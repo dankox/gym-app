@@ -9,6 +9,7 @@ struct ExerciseTimerView: View {
 
     @State private var timeRemaining: Int
     @State private var totalRestSeconds: Int
+    @State private var progress: Double = 1.0
     @State private var isTimerRunning: Bool = false
     @State private var isTimerPaused: Bool = false
     @State private var timer: Timer? = nil
@@ -18,15 +19,11 @@ struct ExerciseTimerView: View {
         let rest = max(exercise.restSeconds, 1)
         _totalRestSeconds = State(initialValue: rest)
         _timeRemaining = State(initialValue: rest)
+        _progress = State(initialValue: 1.0)
     }
 
     private var currentSetNumber: Int {
         min(exercise.currentCompletedSets + 1, exercise.sets)
-    }
-
-    private var progress: Double {
-        guard totalRestSeconds > 0 else { return 0 }
-        return Double(timeRemaining) / Double(totalRestSeconds)
     }
 
     var body: some View {
@@ -117,7 +114,6 @@ struct ExerciseTimerView: View {
                     style: StrokeStyle(lineWidth: 16, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(isTimerRunning ? .linear(duration: 1.0) : nil, value: timeRemaining)
 
             VStack(spacing: 8) {
                 Text(formatTime(timeRemaining))
@@ -200,8 +196,16 @@ struct ExerciseTimerView: View {
 
     private func startTimer() {
         timeRemaining = totalRestSeconds
+        let transaction = Transaction(animation: nil)
+        withTransaction(transaction) {
+            progress = 1.0
+        }
         isTimerRunning = true
         isTimerPaused = false
+
+        withAnimation(.linear(duration: Double(totalRestSeconds))) {
+            progress = 0.0
+        }
 
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
@@ -218,10 +222,20 @@ struct ExerciseTimerView: View {
         isTimerPaused = true
         timer?.invalidate()
         timer = nil
+
+        let transaction = Transaction(animation: nil)
+        withTransaction(transaction) {
+            progress = Double(timeRemaining) / Double(totalRestSeconds)
+        }
     }
 
     private func resumeTimer() {
         isTimerPaused = false
+
+        withAnimation(.linear(duration: Double(timeRemaining))) {
+            progress = 0.0
+        }
+
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             if timeRemaining > 1 {
                 timeRemaining -= 1
@@ -237,6 +251,11 @@ struct ExerciseTimerView: View {
         timer = nil
         isTimerRunning = false
         isTimerPaused = false
+
+        let transaction = Transaction(animation: nil)
+        withTransaction(transaction) {
+            progress = 1.0
+        }
     }
 
     private func completeCurrentSet() {
