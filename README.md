@@ -83,3 +83,5 @@ A vibe-coded, native iOS application built with **SwiftUI** and **SwiftData** de
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+App Icon: [https://www.vexels.com/png-svg/preview/129274/backflip-silhouette](www.vexels.com)
