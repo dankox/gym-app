@@ -19,6 +19,7 @@
 		AABB000A0000000AAABB000A /* RoutineListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC000A0000000ABBCC000A /* RoutineListView.swift */; };
 		AABB000B0000000BAABB000B /* CreateRoutineView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC000B0000000BBBCC000B /* CreateRoutineView.swift */; };
 		AABB000C0000000CAABB000C /* AddExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC000C0000000CBBCC000C /* AddExerciseView.swift */; };
+		AABB000F0000000FAABB000F /* ExerciseTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC000F0000000FBBCC000F /* ExerciseTimerView.swift */; };
 		AABB000D0000000DAABB000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBCC000D0000000DBBCC000D /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +36,7 @@
 		BBCC000A0000000ABBCC000A /* RoutineListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutineListView.swift; sourceTree = "<group>"; };
 		BBCC000B0000000BBBCC000B /* CreateRoutineView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateRoutineView.swift; sourceTree = "<group>"; };
 		BBCC000C0000000CBBCC000C /* AddExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddExerciseView.swift; sourceTree = "<group>"; };
+		BBCC000F0000000FBBCC000F /* ExerciseTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTimerView.swift; sourceTree = "<group>"; };
 		BBCC000D0000000DBBCC000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BBCC000E0000000EBBCC000E /* GymApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GymApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -90,6 +92,7 @@
 				BBCC000A0000000ABBCC000A /* RoutineListView.swift */,
 				BBCC000B0000000BBBCC000B /* CreateRoutineView.swift */,
 				BBCC000C0000000CBBCC000C /* AddExerciseView.swift */,
+				BBCC000F0000000FBBCC000F /* ExerciseTimerView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -183,6 +186,7 @@
 				AABB000A0000000AAABB000A /* RoutineListView.swift in Sources */,
 				AABB000B0000000BAABB000B /* CreateRoutineView.swift in Sources */,
 				AABB000C0000000CAABB000C /* AddExerciseView.swift in Sources */,
+				AABB000F0000000FAABB000F /* ExerciseTimerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

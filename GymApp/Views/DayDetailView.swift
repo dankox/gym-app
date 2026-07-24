@@ -111,6 +111,8 @@ struct WorkoutDayEditor: View {
     @Environment(\.modelContext) private var modelContext
     @Bindable var day: WorkoutDay
 
+    @State private var activeTimerExercise: WorkoutExercise? = nil
+
     private var sortedExercises: [WorkoutExercise] {
         day.exercises.sorted { $0.sortOrder < $1.sortOrder }
     }
@@ -153,7 +155,9 @@ struct WorkoutDayEditor: View {
                         .italic()
                 } else {
                     ForEach(sortedExercises) { exercise in
-                        WorkoutExerciseRow(exercise: exercise)
+                        WorkoutExerciseRow(exercise: exercise, onStartTimer: { ex in
+                            activeTimerExercise = ex
+                        })
                     }
                     .onDelete(perform: deleteExercises)
                 }
@@ -179,6 +183,9 @@ struct WorkoutDayEditor: View {
             }
         }
         .listStyle(.insetGrouped)
+        .sheet(item: $activeTimerExercise) { exercise in
+            ExerciseTimerView(exercise: exercise)
+        }
     }
 
     var exercisesSectionHeader: some View {
@@ -206,6 +213,7 @@ struct WorkoutDayEditor: View {
 
 struct WorkoutExerciseRow: View {
     let exercise: WorkoutExercise
+    var onStartTimer: (WorkoutExercise) -> Void
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
@@ -213,6 +221,11 @@ struct WorkoutExerciseRow: View {
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     exercise.isCompleted.toggle()
+                    if exercise.isCompleted {
+                        exercise.completedSets = exercise.sets
+                    } else {
+                        exercise.completedSets = 0
+                    }
                 }
             } label: {
                 Image(
@@ -233,14 +246,32 @@ struct WorkoutExerciseRow: View {
                     .foregroundStyle(exercise.isCompleted ? .secondary : .primary)
                     .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
 
-                HStack(spacing: 20) {
+                HStack(spacing: 16) {
                     statBadge(icon: "repeat", label: "\(exercise.sets) sets")
                     statBadge(icon: "number", label: "\(exercise.reps) reps")
                     statBadge(icon: "timer", label: restLabel)
                 }
                 .opacity(exercise.isCompleted ? 0.5 : 1.0)
                 .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
+
+                if exercise.currentCompletedSets > 0 && !exercise.isCompleted {
+                    Text("Sets completed: \(exercise.currentCompletedSets) / \(exercise.sets)")
+                        .font(.caption2.bold())
+                        .foregroundStyle(Color.accentColor)
+                }
             }
+
+            Spacer()
+
+            // Play button for rest timer
+            Button {
+                onStartTimer(exercise)
+            } label: {
+                Image(systemName: "play.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 4)
     }
