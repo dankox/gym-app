@@ -115,16 +115,22 @@ struct RoutinePickerView: View {
     // MARK: - Import Logic
 
     func importRoutine(_ routine: Routine) {
-        // Replace any existing workout for this date
+        let workoutDay: WorkoutDay
         if let existing = workoutDays.first(where: {
             Calendar.current.isDate($0.date, inSameDayAs: date)
         }) {
-            modelContext.delete(existing)
+            workoutDay = existing
+            if workoutDay.routineName.isEmpty {
+                workoutDay.routineName = routine.name
+            } else if !workoutDay.routineName.components(separatedBy: ", ").contains(routine.name) {
+                workoutDay.routineName += ", \(routine.name)"
+            }
+        } else {
+            workoutDay = WorkoutDay(date: date, routineName: routine.name)
+            modelContext.insert(workoutDay)
         }
 
-        let workoutDay = WorkoutDay(date: date, routineName: routine.name)
-        modelContext.insert(workoutDay)
-
+        let currentMaxSort = workoutDay.exercises.map(\.sortOrder).max() ?? -1
         let sortedExercises = routine.exercises.sorted { $0.sortOrder < $1.sortOrder }
         for (index, template) in sortedExercises.enumerated() {
             let exercise = WorkoutExercise(
@@ -132,7 +138,8 @@ struct RoutinePickerView: View {
                 sets: template.sets,
                 reps: template.reps,
                 restSeconds: template.restSeconds,
-                sortOrder: index
+                sortOrder: currentMaxSort + 1 + index,
+                routineName: routine.name
             )
             workoutDay.exercises.append(exercise)
         }

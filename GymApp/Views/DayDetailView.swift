@@ -47,8 +47,8 @@ struct DayDetailView: View {
                             showRoutinePicker = true
                         } label: {
                             Label(
-                                workoutDay == nil ? "Import Routine" : "Change Routine",
-                                systemImage: "square.and.arrow.down"
+                                workoutDay == nil ? "Import Routine" : "Add Routine",
+                                systemImage: workoutDay == nil ? "square.and.arrow.down" : "plus"
                             )
                         }
                     }
@@ -121,6 +121,28 @@ struct WorkoutDayEditor: View {
         day.exercises.filter(\.isCompleted).count
     }
 
+    private var routineGroups: [(name: String, exercises: [WorkoutExercise])] {
+        var groups: [(name: String, exercises: [WorkoutExercise])] = []
+        var groupDict: [String: [WorkoutExercise]] = [:]
+
+        for exercise in sortedExercises {
+            let key = exercise.routineName ?? ""
+            groupDict[key, default: []].append(exercise)
+        }
+
+        var seenKeys = Set<String>()
+        for exercise in sortedExercises {
+            let key = exercise.routineName ?? ""
+            if !seenKeys.contains(key) {
+                seenKeys.insert(key)
+                if let exList = groupDict[key] {
+                    groups.append((name: key, exercises: exList))
+                }
+            }
+        }
+        return groups
+    }
+
     // Bridge optional String? to the String that TextEditor requires.
     private var notesBinding: Binding<String> {
         Binding(
@@ -133,36 +155,41 @@ struct WorkoutDayEditor: View {
 
     var body: some View {
         List {
-            // Routine badge
-            if !day.routineName.isEmpty {
-                Section {
-                    HStack {
-                        Image(systemName: "list.bullet.clipboard.fill")
-                            .foregroundStyle(Color.accentColor)
-                        Text(day.routineName)
-                            .font(.headline)
-                    }
-                } header: {
-                    Text("Routine")
-                }
-            }
-
-            // Exercises
-            Section {
-                if sortedExercises.isEmpty {
+            // Exercises grouped by routine
+            if sortedExercises.isEmpty {
+                Section("Exercises") {
                     Text("No exercises")
                         .foregroundStyle(.secondary)
                         .italic()
-                } else {
+                }
+            } else if routineGroups.count > 1 || (routineGroups.count == 1 && !routineGroups[0].name.isEmpty) {
+                ForEach(routineGroups, id: \.name) { group in
+                    Section {
+                        ForEach(group.exercises) { exercise in
+                            WorkoutExerciseRow(exercise: exercise, onStartTimer: { ex in
+                                activeTimerExercise = ex
+                            })
+                        }
+                        .onDelete { offsets in
+                            deleteExercises(in: group.exercises, at: offsets)
+                        }
+                    } header: {
+                        routineGroupHeader(name: group.name, exercises: group.exercises)
+                    }
+                }
+            } else {
+                Section {
                     ForEach(sortedExercises) { exercise in
                         WorkoutExerciseRow(exercise: exercise, onStartTimer: { ex in
                             activeTimerExercise = ex
                         })
                     }
-                    .onDelete(perform: deleteExercises)
+                    .onDelete { offsets in
+                        deleteExercises(in: sortedExercises, at: offsets)
+                    }
+                } header: {
+                    exercisesSectionHeader
                 }
-            } header: {
-                exercisesSectionHeader
             }
 
             // Notes
@@ -201,9 +228,24 @@ struct WorkoutDayEditor: View {
         }
     }
 
-    private func deleteExercises(at offsets: IndexSet) {
+    func routineGroupHeader(name: String, exercises: [WorkoutExercise]) -> some View {
+        let done = exercises.filter(\.isCompleted).count
+        return HStack {
+            Label(name.isEmpty ? "Exercises" : name, systemImage: "list.bullet.clipboard.fill")
+                .foregroundStyle(Color.accentColor)
+            Spacer()
+            if !exercises.isEmpty {
+                Text("\(done) / \(exercises.count) done")
+                    .font(.caption)
+                    .foregroundStyle(done == exercises.count ? Color.green : .secondary)
+                    .fontWeight(done == exercises.count ? .semibold : .regular)
+            }
+        }
+    }
+
+    private func deleteExercises(in list: [WorkoutExercise], at offsets: IndexSet) {
         for index in offsets {
-            let exercise = sortedExercises[index]
+            let exercise = list[index]
             modelContext.delete(exercise)
         }
     }
