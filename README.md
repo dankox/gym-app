@@ -82,4 +82,4 @@ A vibe-coded, native iOS application built with **SwiftUI** and **SwiftData** de
 
 ## 📄 License
 
-This project is available under the standard repository license terms.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
