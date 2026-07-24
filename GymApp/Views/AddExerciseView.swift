@@ -38,13 +38,19 @@ struct AddExerciseView: View {
 
                 Section("Rest Time") {
                     Picker("Rest Time", selection: $restSeconds) {
+                        Text("5 sec").tag(5)
+                        Text("10 sec").tag(10)
                         Text("15 sec").tag(15)
                         Text("30 sec").tag(30)
                         Text("45 sec").tag(45)
                         Text("1 min").tag(60)
                         Text("1 min 30 sec").tag(90)
                         Text("2 min").tag(120)
+                        Text("2 min 30 sec").tag(150)
                         Text("3 min").tag(180)
+                        Text("3 min 30 sec").tag(210)
+                        Text("4 min").tag(240)
+                        Text("4 min 30 sec").tag(270)
                         Text("5 min").tag(300)
                     }
                     .pickerStyle(.wheel)
