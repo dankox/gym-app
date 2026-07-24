@@ -3,6 +3,7 @@ import AudioToolbox
 import UIKit
 
 struct ExerciseTimerView: View {
+    @Environment(ThemeManager.self) private var themeManager
     @Bindable var exercise: WorkoutExercise
 
     @Environment(\.dismiss) private var dismiss
@@ -80,7 +81,7 @@ struct ExerciseTimerView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.accentColor.opacity(0.1))
+                .fill(themeManager.accentColor.opacity(0.1))
         )
     }
 
@@ -104,13 +105,13 @@ struct ExerciseTimerView: View {
         ZStack {
             // Outer Ring Background
             Circle()
-                .stroke(Color.accentColor.opacity(0.2), lineWidth: 16)
+                .stroke(themeManager.accentColor.opacity(0.2), lineWidth: 16)
 
             // Progress Ring
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    Color.accentColor,
+                    themeManager.accentColor,
                     style: StrokeStyle(lineWidth: 16, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
@@ -123,7 +124,7 @@ struct ExerciseTimerView: View {
                 if isTimerRunning && !isTimerPaused {
                     Text("Resting...")
                         .font(.headline)
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(themeManager.accentColor)
                 } else if isTimerPaused {
                     Text("Paused")
                         .font(.headline)

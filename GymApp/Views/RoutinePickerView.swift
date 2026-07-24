@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct RoutinePickerView: View {
+    @Environment(ThemeManager.self) private var themeManager
     let date: Date
 
     @Environment(\.modelContext) private var modelContext
@@ -50,7 +51,7 @@ struct RoutinePickerView: View {
                     showCreateRoutine = true
                 } label: {
                     Label("Create New Routine", systemImage: "plus.circle.fill")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(themeManager.accentColor)
                         .fontWeight(.medium)
                 }
             }
@@ -73,7 +74,7 @@ struct RoutinePickerView: View {
                             }
                             Spacer()
                             Image(systemName: "square.and.arrow.down")
-                                .foregroundStyle(Color.accentColor)
+                                .foregroundStyle(themeManager.accentColor)
                         }
                         .padding(.vertical, 4)
                     }

@@ -89,16 +89,18 @@ struct RoutineListView: View {
 // MARK: - Routine Row
 
 struct RoutineRow: View {
+    @Environment(ThemeManager.self) private var themeManager
+
     let routine: Routine
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Color.accentColor.opacity(0.12))
+                    .fill(themeManager.accentColor.opacity(0.12))
                     .frame(width: 44, height: 44)
                 Image(systemName: "dumbbell.fill")
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(themeManager.accentColor)
             }
             VStack(alignment: .leading, spacing: 3) {
                 Text(routine.name)

@@ -14,6 +14,7 @@ struct ExerciseDraft: Identifiable {
 // MARK: - Create / Edit Routine View
 
 struct CreateRoutineView: View {
+    @Environment(ThemeManager.self) private var themeManager
     var routine: Routine?
 
     @Environment(\.modelContext) private var modelContext
@@ -47,7 +48,7 @@ struct CreateRoutineView: View {
                         showAddExercise = true
                     } label: {
                         Label("Add Exercise", systemImage: "plus.circle.fill")
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(themeManager.accentColor)
                     }
                 } header: {
                     Text("Exercises\(drafts.isEmpty ? "" : " (\(drafts.count))")")

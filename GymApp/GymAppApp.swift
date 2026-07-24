@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct GymAppApp: App {
     let container: ModelContainer
+    @State private var themeManager = ThemeManager.shared
 
     init() {
         let schema = Schema([
@@ -37,6 +38,7 @@ struct GymAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(themeManager)
         }
         .modelContainer(container)
     }

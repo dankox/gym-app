@@ -42,6 +42,7 @@ struct DayDetailView: View {
                             } label: {
                                 Image(systemName: "trash")
                             }
+                            .tint(.red)
                         }
                         Button {
                             showRoutinePicker = true
@@ -108,6 +109,7 @@ struct DayDetailView: View {
 // MARK: - Workout Day Editor (uses @Bindable for notes binding)
 
 struct WorkoutDayEditor: View {
+    @Environment(ThemeManager.self) private var themeManager
     @Environment(\.modelContext) private var modelContext
     @Bindable var day: WorkoutDay
 
@@ -240,7 +242,7 @@ struct WorkoutDayEditor: View {
         let done = exercises.filter(\.isCompleted).count
         return HStack {
             Label(name.isEmpty ? "Exercises" : name, systemImage: "list.bullet.clipboard.fill")
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(themeManager.accentColor)
             Spacer()
             if !exercises.isEmpty {
                 Text("\(done) / \(exercises.count) done")
@@ -262,6 +264,8 @@ struct WorkoutDayEditor: View {
 // MARK: - Workout Exercise Row
 
 struct WorkoutExerciseRow: View {
+    @Environment(ThemeManager.self) private var themeManager
+
     let exercise: WorkoutExercise
     var onEdit: (WorkoutExercise) -> Void
     var onStartTimer: (WorkoutExercise) -> Void
@@ -308,7 +312,7 @@ struct WorkoutExerciseRow: View {
                 if exercise.currentCompletedSets > 0 && !exercise.isCompleted {
                     Text("Sets completed: \(exercise.currentCompletedSets) / \(exercise.sets)")
                         .font(.caption2.bold())
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(themeManager.accentColor)
                 }
             }
             .contentShape(Rectangle())
@@ -335,7 +339,7 @@ struct WorkoutExerciseRow: View {
                 } label: {
                     Image(systemName: "play.circle.fill")
                         .font(.title2)
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(themeManager.accentColor)
                 }
                 .buttonStyle(.plain)
             }

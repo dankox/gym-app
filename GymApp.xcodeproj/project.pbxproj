@@ -21,6 +21,8 @@
 		AABB000C0000000CAABB000C /* AddExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC000C0000000CBBCC000C /* AddExerciseView.swift */; };
 		AABB000F0000000FAABB000F /* ExerciseTimerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC000F0000000FBBCC000F /* ExerciseTimerView.swift */; };
 		AABB001000000010AABB0010 /* EditWorkoutExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001000000010BBCC0010 /* EditWorkoutExerciseView.swift */; };
+		AABB001100000011AABB0011 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001100000011BBCC0011 /* ThemeManager.swift */; };
+		AABB001200000012AABB0012 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001200000012BBCC0012 /* SettingsView.swift */; };
 		AABB000D0000000DAABB000D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBCC000D0000000DBBCC000D /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +41,8 @@
 		BBCC000C0000000CBBCC000C /* AddExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddExerciseView.swift; sourceTree = "<group>"; };
 		BBCC000F0000000FBBCC000F /* ExerciseTimerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseTimerView.swift; sourceTree = "<group>"; };
 		BBCC001000000010BBCC0010 /* EditWorkoutExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditWorkoutExerciseView.swift; sourceTree = "<group>"; };
+		BBCC001100000011BBCC0011 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
+		BBCC001200000012BBCC0012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		BBCC000D0000000DBBCC000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BBCC000E0000000EBBCC000E /* GymApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GymApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -69,6 +73,7 @@
 				BBCC000200000002BBCC0002 /* ContentView.swift */,
 				CCDD000300000003CCDD0003 /* Models */,
 				CCDD000400000004CCDD0004 /* Views */,
+				CCDD000600000006CCDD0006 /* Theme */,
 				BBCC000D0000000DBBCC000D /* Assets.xcassets */,
 			);
 			path = GymApp;
@@ -96,8 +101,17 @@
 				BBCC000C0000000CBBCC000C /* AddExerciseView.swift */,
 				BBCC000F0000000FBBCC000F /* ExerciseTimerView.swift */,
 				BBCC001000000010BBCC0010 /* EditWorkoutExerciseView.swift */,
+				BBCC001200000012BBCC0012 /* SettingsView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		CCDD000600000006CCDD0006 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				BBCC001100000011BBCC0011 /* ThemeManager.swift */,
+			);
+			path = Theme;
 			sourceTree = "<group>";
 		};
 		CCDD000500000005CCDD0005 /* Products */ = {
@@ -191,6 +205,8 @@
 				AABB000C0000000CAABB000C /* AddExerciseView.swift in Sources */,
 				AABB000F0000000FAABB000F /* ExerciseTimerView.swift in Sources */,
 				AABB001000000010AABB0010 /* EditWorkoutExerciseView.swift in Sources */,
+				AABB001100000011AABB0011 /* ThemeManager.swift in Sources */,
+				AABB001200000012AABB0012 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -157,6 +157,7 @@ struct CalendarView: View {
                         Image(systemName: "trash")
                     }
                     .buttonStyle(.bordered)
+                    .tint(.red)
                     .controlSize(.regular)
 
                     Button("View Details") { showDayDetail = true }
@@ -241,6 +242,8 @@ struct CalendarView: View {
 // MARK: - Day Cell
 
 struct DayCell: View {
+    @Environment(ThemeManager.self) private var themeManager
+
     let date: Date
     let isSelected: Bool
     let isToday: Bool
@@ -267,18 +270,18 @@ struct DayCell: View {
     }
 
     private var cellBackground: Color {
-        if isSelected { return .accentColor }
-        if isToday { return .accentColor.opacity(0.15) }
+        if isSelected { return themeManager.accentColor }
+        if isToday { return themeManager.accentColor.opacity(0.15) }
         return .clear
     }
 
     private var textColor: Color {
         if isSelected { return .white }
-        if isToday { return .accentColor }
+        if isToday { return themeManager.accentColor }
         return .primary
     }
 
     private var dotColor: Color {
-        isSelected ? .white.opacity(0.85) : .accentColor
+        isSelected ? .white.opacity(0.85) : themeManager.accentColor
     }
 }
