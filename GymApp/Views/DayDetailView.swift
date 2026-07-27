@@ -302,11 +302,11 @@ struct WorkoutExerciseRow: View {
                     .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
 
                 HStack(spacing: 16) {
-                    statBadge(icon: "repeat", label: "\(exercise.sets) sets")
-                    statBadge(icon: "number", label: "\(exercise.reps) reps")
+                    statBadge(icon: "repeat", label: "\(exercise.sets)x")
+                    statBadge(icon: "number", label: "\(exercise.reps)x")
                     statBadge(icon: "timer", label: restLabel)
                     if !exercise.currentPausePoints.isEmpty {
-                        statBadge(icon: "pause.circle.fill", label: "\(exercise.currentPausePoints.count) pause\(exercise.currentPausePoints.count == 1 ? "" : "s")")
+                        statBadge(icon: "pause.circle.fill", label: "\(exercise.currentPausePoints.count)x")
                     }
                 }
                 .opacity(exercise.isCompleted ? 0.5 : 1.0)
@@ -363,8 +363,8 @@ struct WorkoutExerciseRow: View {
         if exercise.restSeconds >= 60 {
             let mins = exercise.restSeconds / 60
             let secs = exercise.restSeconds % 60
-            return secs == 0 ? "\(mins)m rest" : "\(mins)m\(secs)s rest"
+            return secs == 0 ? "\(mins)m" : "\(mins)m\(secs)"
         }
-        return "\(exercise.restSeconds)s rest"
+        return "\(exercise.restSeconds)s"
     }
 }
