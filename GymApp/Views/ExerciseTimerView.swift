@@ -15,12 +15,16 @@ struct ExerciseTimerView: View {
     @State private var isTimerPaused: Bool = false
     @State private var timer: Timer? = nil
 
+    @State private var endDate: Date? = nil
+    @State private var remainingDuration: Double = 0.0
+
     init(exercise: WorkoutExercise) {
         self.exercise = exercise
         let rest = max(exercise.restSeconds, 1)
         _totalRestSeconds = State(initialValue: rest)
         _timeRemaining = State(initialValue: rest)
         _progress = State(initialValue: 1.0)
+        _remainingDuration = State(initialValue: Double(rest))
     }
 
     private var currentSetNumber: Int {
@@ -195,56 +199,66 @@ struct ExerciseTimerView: View {
 
     // MARK: - Timer Logic
 
-    private func startTimer() {
-        timeRemaining = totalRestSeconds
-        let transaction = Transaction(animation: nil)
-        withTransaction(transaction) {
-            progress = 1.0
+    private func startHighFrequencyTimer() {
+        timer?.invalidate()
+        let t = Timer(timeInterval: 0.03, repeats: true) { _ in
+            updateTimer()
         }
+        RunLoop.main.add(t, forMode: .common)
+        timer = t
+    }
+
+    private func updateTimer() {
+        guard let endDate = endDate else { return }
+        let now = Date()
+        let diff = endDate.timeIntervalSince(now)
+
+        if diff > 0 {
+            timeRemaining = Int(ceil(diff))
+            progress = diff / Double(totalRestSeconds)
+        } else {
+            timeRemaining = 0
+            progress = 0.0
+            timer?.invalidate()
+            timer = nil
+            completeCurrentSet()
+        }
+    }
+
+    private func startTimer() {
+        let duration = Double(totalRestSeconds)
+        remainingDuration = duration
+        endDate = Date().addingTimeInterval(duration)
+
         isTimerRunning = true
         isTimerPaused = false
 
-        withAnimation(.linear(duration: Double(totalRestSeconds))) {
-            progress = 0.0
-        }
-
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if timeRemaining > 1 {
-                timeRemaining -= 1
-            } else {
-                timeRemaining = 0
-                completeCurrentSet()
-            }
-        }
+        startHighFrequencyTimer()
     }
 
     private func pauseTimer() {
+        guard isTimerRunning && !isTimerPaused else { return }
+
+        if let endDate = endDate {
+            let diff = max(0, endDate.timeIntervalSince(Date()))
+            remainingDuration = diff
+            timeRemaining = Int(ceil(diff))
+            progress = diff / Double(totalRestSeconds)
+        }
+
         isTimerPaused = true
         timer?.invalidate()
         timer = nil
-
-        let transaction = Transaction(animation: nil)
-        withTransaction(transaction) {
-            progress = Double(timeRemaining) / Double(totalRestSeconds)
-        }
+        endDate = nil
     }
 
     private func resumeTimer() {
+        guard isTimerRunning && isTimerPaused else { return }
+
+        endDate = Date().addingTimeInterval(remainingDuration)
         isTimerPaused = false
 
-        withAnimation(.linear(duration: Double(timeRemaining))) {
-            progress = 0.0
-        }
-
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            if timeRemaining > 1 {
-                timeRemaining -= 1
-            } else {
-                timeRemaining = 0
-                completeCurrentSet()
-            }
-        }
+        startHighFrequencyTimer()
     }
 
     private func stopTimer() {
@@ -252,11 +266,10 @@ struct ExerciseTimerView: View {
         timer = nil
         isTimerRunning = false
         isTimerPaused = false
-
-        let transaction = Transaction(animation: nil)
-        withTransaction(transaction) {
-            progress = 1.0
-        }
+        endDate = nil
+        remainingDuration = Double(totalRestSeconds)
+        timeRemaining = totalRestSeconds
+        progress = 1.0
     }
 
     private func completeCurrentSet() {
