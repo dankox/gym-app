@@ -17,6 +17,8 @@ struct ExerciseTimerView: View {
 
     @State private var endDate: Date? = nil
     @State private var remainingDuration: Double = 0.0
+    @State private var triggeredPausePoints: Set<Int> = []
+    @State private var autoPauseMessage: String? = nil
 
     init(exercise: WorkoutExercise) {
         self.exercise = exercise
@@ -78,6 +80,9 @@ struct ExerciseTimerView: View {
                 detailBadge(icon: "repeat", title: "Set", value: "\(currentSetNumber) of \(exercise.sets)")
                 detailBadge(icon: "number", title: "Reps", value: "\(exercise.reps)")
                 detailBadge(icon: "timer", title: "Rest", value: restLabel(for: exercise.restSeconds))
+                if !exercise.currentPausePoints.isEmpty {
+                    detailBadge(icon: "pause.circle.fill", title: "Pauses", value: "\(exercise.currentPausePoints.count)")
+                }
             }
             .padding(.top, 4)
         }
@@ -120,12 +125,38 @@ struct ExerciseTimerView: View {
                 )
                 .rotationEffect(.degrees(-90))
 
+            // Pause Point Markers on Ring
+            ForEach(exercise.currentPausePoints, id: \.self) { pp in
+                let remainingProgress = Double(totalRestSeconds - pp) / Double(totalRestSeconds)
+                let angleDegrees = remainingProgress * 360.0
+                let isPassed = triggeredPausePoints.contains(pp)
+
+                Circle()
+                    .fill(isPassed ? Color.secondary : Color.orange)
+                    .frame(width: 12, height: 12)
+                    .overlay(
+                        Circle().stroke(Color.white, lineWidth: 2)
+                    )
+                    .offset(y: -120)
+                    .rotationEffect(.degrees(angleDegrees))
+            }
+
             VStack(spacing: 8) {
                 Text(formatTime(timeRemaining))
                     .font(.system(size: 56, weight: .bold, design: .rounded))
                     .monospacedDigit()
 
-                if isTimerRunning && !isTimerPaused {
+                if let autoPauseMessage {
+                    HStack(spacing: 4) {
+                        Image(systemName: "pause.circle.fill")
+                        Text(autoPauseMessage)
+                    }
+                    .font(.caption.bold())
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Color.orange.opacity(0.15), in: Capsule())
+                } else if isTimerRunning && !isTimerPaused {
                     Text("Resting...")
                         .font(.headline)
                         .foregroundStyle(themeManager.accentColor)
@@ -216,6 +247,34 @@ struct ExerciseTimerView: View {
         if diff > 0 {
             timeRemaining = Int(ceil(diff))
             progress = diff / Double(totalRestSeconds)
+
+            // Check auto-pause points
+            let elapsed = Double(totalRestSeconds) - diff
+            let sortedPausePoints = exercise.currentPausePoints.sorted()
+
+            for pp in sortedPausePoints {
+                if elapsed >= Double(pp) && !triggeredPausePoints.contains(pp) {
+                    triggeredPausePoints.insert(pp)
+
+                    // Freeze exact diff & remainingDuration
+                    remainingDuration = diff
+                    timeRemaining = Int(ceil(diff))
+                    progress = diff / Double(totalRestSeconds)
+
+                    isTimerPaused = true
+                    timer?.invalidate()
+                    timer = nil
+                    self.endDate = nil
+
+                    autoPauseMessage = "Auto-paused after \(formatSeconds(pp)) rest"
+
+                    // Audio & Haptic Feedback
+                    let generator = UINotificationFeedbackGenerator()
+                    generator.notificationOccurred(.warning)
+                    AudioServicesPlaySystemSound(1052)
+                    break
+                }
+            }
         } else {
             timeRemaining = 0
             progress = 0.0
@@ -230,6 +289,8 @@ struct ExerciseTimerView: View {
         remainingDuration = duration
         endDate = Date().addingTimeInterval(duration)
 
+        triggeredPausePoints.removeAll()
+        autoPauseMessage = nil
         isTimerRunning = true
         isTimerPaused = false
 
@@ -255,6 +316,7 @@ struct ExerciseTimerView: View {
     private func resumeTimer() {
         guard isTimerRunning && isTimerPaused else { return }
 
+        autoPauseMessage = nil
         endDate = Date().addingTimeInterval(remainingDuration)
         isTimerPaused = false
 
@@ -270,6 +332,8 @@ struct ExerciseTimerView: View {
         remainingDuration = Double(totalRestSeconds)
         timeRemaining = totalRestSeconds
         progress = 1.0
+        triggeredPausePoints.removeAll()
+        autoPauseMessage = nil
     }
 
     private func completeCurrentSet() {
@@ -297,6 +361,15 @@ struct ExerciseTimerView: View {
     }
 
     // MARK: - Formatting Helpers
+
+    private func formatSeconds(_ seconds: Int) -> String {
+        if seconds >= 60 {
+            let m = seconds / 60
+            let s = seconds % 60
+            return s == 0 ? "\(m)m" : "\(m)m \(s)s"
+        }
+        return "\(seconds)s"
+    }
 
     private func formatTime(_ seconds: Int) -> String {
         let mins = seconds / 60

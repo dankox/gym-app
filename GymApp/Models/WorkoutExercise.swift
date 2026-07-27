@@ -11,6 +11,7 @@ class WorkoutExercise {
     var isCompleted: Bool
     var completedSets: Int?
     var routineName: String?
+    var pausePoints: [Int]?
     var workoutDay: WorkoutDay?
 
     init(
@@ -20,7 +21,8 @@ class WorkoutExercise {
         restSeconds: Int,
         sortOrder: Int = 0,
         completedSets: Int? = 0,
-        routineName: String? = nil
+        routineName: String? = nil,
+        pausePoints: [Int]? = []
     ) {
         self.name = name
         self.sets = sets
@@ -30,9 +32,14 @@ class WorkoutExercise {
         self.isCompleted = false
         self.completedSets = completedSets
         self.routineName = routineName
+        self.pausePoints = pausePoints ?? []
     }
 
     var currentCompletedSets: Int {
         completedSets ?? 0
+    }
+
+    var currentPausePoints: [Int] {
+        pausePoints ?? []
     }
 }

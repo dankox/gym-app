@@ -9,6 +9,7 @@ struct ExerciseDraft: Identifiable {
     var sets: Int = 3
     var reps: Int = 10
     var restSeconds: Int = 60
+    var pausePoints: [Int] = []
 }
 
 // MARK: - Create / Edit Routine View
@@ -100,7 +101,7 @@ struct CreateRoutineView: View {
         routineName = routine.name
         drafts = routine.exercises
             .sorted { $0.sortOrder < $1.sortOrder }
-            .map { ExerciseDraft(name: $0.name, sets: $0.sets, reps: $0.reps, restSeconds: $0.restSeconds) }
+            .map { ExerciseDraft(name: $0.name, sets: $0.sets, reps: $0.reps, restSeconds: $0.restSeconds, pausePoints: $0.currentPausePoints) }
     }
 
     // MARK: - Save
@@ -117,7 +118,8 @@ struct CreateRoutineView: View {
             for (index, draft) in drafts.enumerated() {
                 let template = ExerciseTemplate(
                     name: draft.name, sets: draft.sets, reps: draft.reps,
-                    restSeconds: draft.restSeconds, sortOrder: index
+                    restSeconds: draft.restSeconds, sortOrder: index,
+                    pausePoints: draft.pausePoints
                 )
                 routine.exercises.append(template)
             }
@@ -127,7 +129,8 @@ struct CreateRoutineView: View {
             for (index, draft) in drafts.enumerated() {
                 let template = ExerciseTemplate(
                     name: draft.name, sets: draft.sets, reps: draft.reps,
-                    restSeconds: draft.restSeconds, sortOrder: index
+                    restSeconds: draft.restSeconds, sortOrder: index,
+                    pausePoints: draft.pausePoints
                 )
                 newRoutine.exercises.append(template)
             }
@@ -156,10 +159,13 @@ struct ExerciseDraftRow: View {
             Text(draft.name.isEmpty ? "Unnamed Exercise" : draft.name)
                 .font(.headline)
                 .foregroundStyle(draft.name.isEmpty ? .secondary : .primary)
-            HStack(spacing: 20) {
+            HStack(spacing: 16) {
                 statLabel(icon: "repeat", text: "\(draft.sets) sets")
                 statLabel(icon: "number", text: "\(draft.reps) reps")
                 statLabel(icon: "timer", text: restLabel(for: draft.restSeconds))
+                if !draft.pausePoints.isEmpty {
+                    statLabel(icon: "pause.circle.fill", text: "\(draft.pausePoints.count) pause\(draft.pausePoints.count == 1 ? "" : "s")")
+                }
             }
         }
         .padding(.vertical, 4)

@@ -140,7 +140,8 @@ struct RoutinePickerView: View {
                 reps: template.reps,
                 restSeconds: template.restSeconds,
                 sortOrder: currentMaxSort + 1 + index,
-                routineName: routine.name
+                routineName: routine.name,
+                pausePoints: template.currentPausePoints
             )
             workoutDay.exercises.append(exercise)
         }

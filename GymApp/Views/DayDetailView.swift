@@ -305,6 +305,9 @@ struct WorkoutExerciseRow: View {
                     statBadge(icon: "repeat", label: "\(exercise.sets) sets")
                     statBadge(icon: "number", label: "\(exercise.reps) reps")
                     statBadge(icon: "timer", label: restLabel)
+                    if !exercise.currentPausePoints.isEmpty {
+                        statBadge(icon: "pause.circle.fill", label: "\(exercise.currentPausePoints.count) pause\(exercise.currentPausePoints.count == 1 ? "" : "s")")
+                    }
                 }
                 .opacity(exercise.isCompleted ? 0.5 : 1.0)
                 .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
