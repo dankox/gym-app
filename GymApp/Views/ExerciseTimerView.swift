@@ -132,7 +132,7 @@ struct ExerciseTimerView: View {
                 let isPassed = triggeredPausePoints.contains(pp)
 
                 Circle()
-                    .fill(isPassed ? Color.secondary : Color.orange)
+                    .fill(isPassed ? Color.secondary : themeManager.secondaryColor)
                     .frame(width: 12, height: 12)
                     .overlay(
                         Circle().stroke(Color.white, lineWidth: 2)
@@ -152,10 +152,10 @@ struct ExerciseTimerView: View {
                         Text(autoPauseMessage)
                     }
                     .font(.caption.bold())
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(themeManager.secondaryColor)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
-                    .background(Color.orange.opacity(0.15), in: Capsule())
+                    .background(themeManager.secondaryColor.opacity(0.15), in: Capsule())
                 } else if isTimerRunning && !isTimerPaused {
                     Text("Resting...")
                         .font(.headline)
@@ -163,11 +163,11 @@ struct ExerciseTimerView: View {
                 } else if isTimerPaused {
                     Text("Paused")
                         .font(.headline)
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(themeManager.secondaryColor)
                 } else if exercise.currentCompletedSets >= exercise.sets {
                     Text("All sets completed!")
                         .font(.headline)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(themeManager.completedColor)
                 } else {
                     Text("Ready for Set \(currentSetNumber) Rest")
                         .font(.subheadline)

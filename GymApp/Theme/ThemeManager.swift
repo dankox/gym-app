@@ -72,12 +72,30 @@ final class ThemeManager {
         }
     }
 
+    var secondaryColorHex: String {
+        didSet {
+            UserDefaults.standard.set(secondaryColorHex, forKey: "app_secondary_color_hex")
+        }
+    }
+
+    var completedColorHex: String {
+        didSet {
+            UserDefaults.standard.set(completedColorHex, forKey: "app_completed_color_hex")
+        }
+    }
+
     init() {
         let savedAppearanceStr = UserDefaults.standard.string(forKey: "app_appearance") ?? AppAppearance.system.rawValue
         self.appearance = AppAppearance(rawValue: savedAppearanceStr) ?? .system
 
-        let savedHex = UserDefaults.standard.string(forKey: "app_accent_color_hex") ?? "#007AFF"
-        self.accentColorHex = savedHex
+        let savedAccentHex = UserDefaults.standard.string(forKey: "app_accent_color_hex") ?? "#007AFF"
+        self.accentColorHex = savedAccentHex
+
+        let savedSecondaryHex = UserDefaults.standard.string(forKey: "app_secondary_color_hex") ?? "#FF9500"
+        self.secondaryColorHex = savedSecondaryHex
+
+        let savedCompletedHex = UserDefaults.standard.string(forKey: "app_completed_color_hex") ?? "#34C759"
+        self.completedColorHex = savedCompletedHex
     }
 
     var accentColor: Color {
@@ -89,9 +107,29 @@ final class ThemeManager {
         }
     }
 
+    var secondaryColor: Color {
+        get {
+            Color(hex: secondaryColorHex) ?? .orange
+        }
+        set {
+            secondaryColorHex = newValue.toHex()
+        }
+    }
+
+    var completedColor: Color {
+        get {
+            Color(hex: completedColorHex) ?? .green
+        }
+        set {
+            completedColorHex = newValue.toHex()
+        }
+    }
+
     func resetToDefaults() {
         appearance = .system
         accentColorHex = "#007AFF"
+        secondaryColorHex = "#FF9500"
+        completedColorHex = "#34C759"
     }
 }
 

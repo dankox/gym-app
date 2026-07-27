@@ -232,7 +232,7 @@ struct WorkoutDayEditor: View {
             if !day.exercises.isEmpty {
                 Text("\(completedCount) / \(day.exercises.count) done")
                     .font(.caption)
-                    .foregroundStyle(completedCount == day.exercises.count ? Color.green : .secondary)
+                    .foregroundStyle(completedCount == day.exercises.count ? themeManager.completedColor : .secondary)
                     .fontWeight(completedCount == day.exercises.count ? .semibold : .regular)
             }
         }
@@ -247,7 +247,7 @@ struct WorkoutDayEditor: View {
             if !exercises.isEmpty {
                 Text("\(done) / \(exercises.count) done")
                     .font(.caption)
-                    .foregroundStyle(done == exercises.count ? Color.green : .secondary)
+                    .foregroundStyle(done == exercises.count ? themeManager.completedColor : .secondary)
                     .fontWeight(done == exercises.count ? .semibold : .regular)
             }
         }
@@ -289,7 +289,7 @@ struct WorkoutExerciseRow: View {
                         : "circle"
                 )
                 .font(.title2)
-                .foregroundStyle(exercise.isCompleted ? Color.green : Color.secondary)
+                .foregroundStyle(exercise.isCompleted ? themeManager.completedColor : Color.secondary)
             }
             .buttonStyle(.plain)
 

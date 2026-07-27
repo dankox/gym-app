@@ -57,13 +57,31 @@ struct SettingsView: View {
                     .padding(.vertical, 8)
                 }
 
-                // Custom Color Picker
-                Section("Custom Color") {
+                // Custom Color Pickers
+                Section("Theme Colors") {
                     ColorPicker(
-                        "Custom Accent Color",
+                        "Accent Color",
                         selection: Binding(
                             get: { themeManager.accentColor },
                             set: { themeManager.accentColor = $0 }
+                        ),
+                        supportsOpacity: false
+                    )
+
+                    ColorPicker(
+                        "Pause / Secondary Color",
+                        selection: Binding(
+                            get: { themeManager.secondaryColor },
+                            set: { themeManager.secondaryColor = $0 }
+                        ),
+                        supportsOpacity: false
+                    )
+
+                    ColorPicker(
+                        "Completed Status Color",
+                        selection: Binding(
+                            get: { themeManager.completedColor },
+                            set: { themeManager.completedColor = $0 }
                         ),
                         supportsOpacity: false
                     )
@@ -91,21 +109,24 @@ struct SettingsView: View {
                             }
                             Spacer()
 
-                            Image(systemName: "play.circle.fill")
+                            Image(systemName: "checkmark.circle.fill")
                                 .font(.title2)
-                                .foregroundStyle(themeManager.accentColor)
+                                .foregroundStyle(themeManager.completedColor)
                         }
 
                         HStack {
-                            Button("Preview Button") {}
+                            Button("Action Button") {}
                                 .buttonStyle(.borderedProminent)
                                 .tint(themeManager.accentColor)
 
                             Spacer()
 
-                            Label("Rest Timer", systemImage: "timer")
-                                .font(.subheadline.bold())
-                                .foregroundStyle(themeManager.accentColor)
+                            HStack(spacing: 4) {
+                                Image(systemName: "pause.circle.fill")
+                                Text("Paused Timer")
+                            }
+                            .font(.subheadline.bold())
+                            .foregroundStyle(themeManager.secondaryColor)
                         }
                     }
                     .padding(.vertical, 4)
