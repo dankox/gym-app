@@ -12,6 +12,7 @@ class WorkoutExercise {
     var completedSets: Int?
     var routineName: String?
     var pausePoints: [Int]?
+    var notes: String?
     var workoutDay: WorkoutDay?
 
     init(
@@ -22,7 +23,8 @@ class WorkoutExercise {
         sortOrder: Int = 0,
         completedSets: Int? = 0,
         routineName: String? = nil,
-        pausePoints: [Int]? = []
+        pausePoints: [Int]? = [],
+        notes: String? = nil
     ) {
         self.name = name
         self.sets = sets
@@ -33,6 +35,7 @@ class WorkoutExercise {
         self.completedSets = completedSets
         self.routineName = routineName
         self.pausePoints = pausePoints ?? []
+        self.notes = notes
     }
 
     var currentCompletedSets: Int {
@@ -41,5 +44,9 @@ class WorkoutExercise {
 
     var currentPausePoints: [Int] {
         pausePoints ?? []
+    }
+
+    var currentNotes: String {
+        notes ?? ""
     }
 }

@@ -10,6 +10,7 @@ struct AddExerciseView: View {
     @State private var name = ""
     @State private var sets = 3
     @State private var reps = "10"
+    @State private var notes = ""
     @State private var restSeconds = 60
     @State private var pausePoints: [Int] = []
     @State private var newPauseSeconds = 30
@@ -39,6 +40,10 @@ struct AddExerciseView: View {
                             .textInputAutocapitalization(.never)
                             .fixedSize()
                     }
+                }
+
+                Section("Note") {
+                    TextField("Optional note (e.g. Grip width, superset details…)", text: $notes, axis: .vertical)
                 }
 
                 Section("Rest Time") {
@@ -137,6 +142,7 @@ struct AddExerciseView: View {
                     name = draft.name
                     sets = draft.sets
                     reps = draft.reps
+                    notes = draft.notes
                     restSeconds = draft.restSeconds
                     pausePoints = draft.pausePoints
                     if let firstValid = (5...max(5, restSeconds - 5)).first(where: { !pausePoints.contains($0) }) {
@@ -162,6 +168,7 @@ struct AddExerciseView: View {
         result.sets = sets
         let trimmedReps = reps.trimmingCharacters(in: .whitespaces)
         result.reps = trimmedReps.isEmpty ? "10" : trimmedReps
+        result.notes = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         result.restSeconds = restSeconds
         result.pausePoints = pausePoints.filter { $0 < restSeconds }.sorted()
         onSave(result)

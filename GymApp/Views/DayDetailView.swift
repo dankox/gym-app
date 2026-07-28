@@ -320,6 +320,19 @@ struct WorkoutExerciseRow: View {
                         .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
                 }
 
+                if !exercise.currentNotes.isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "note.text")
+                        Text(exercise.currentNotes)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .opacity(exercise.isCompleted ? 0.5 : 1.0)
+                    .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
+                }
+
                 if exercise.currentCompletedSets > 0 && !exercise.isCompleted {
                     Text("Sets completed: \(exercise.currentCompletedSets) / \(exercise.sets)")
                         .font(.caption2.bold())

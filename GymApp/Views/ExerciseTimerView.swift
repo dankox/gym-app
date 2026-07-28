@@ -35,23 +35,26 @@ struct ExerciseTimerView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // Exercise Details Header
-                exerciseHeaderCard
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Exercise Details Header
+                    exerciseHeaderCard
 
-                Spacer()
+                    // Timer Visual Ring & Countdown
+                    timerDisplay
+                        .padding(.top, 4)
 
-                // Timer Visual Ring & Countdown
-                timerDisplay
+                    // Control Buttons
+                    timerControls
 
-                Spacer()
-
-                // Control Buttons
-                timerControls
-
-                Spacer(minLength: 16)
+                    // Exercise Notes (under timer controls)
+                    if !exercise.currentNotes.isEmpty {
+                        exerciseNoteCard
+                            .padding(.top, 4)
+                    }
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle("Rest Timer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -102,6 +105,37 @@ struct ExerciseTimerView: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(themeManager.accentColor.opacity(0.1))
         )
+    }
+
+    // MARK: - Exercise Note Card
+
+    private var exerciseNoteCard: some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "note.text")
+                .font(.body.bold())
+                .foregroundStyle(themeManager.accentColor)
+                .padding(.top, 2)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Note")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+
+                Text(exercise.currentNotes)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(themeManager.accentColor.opacity(0.08))
+        )
+        .padding(.horizontal, 8)
     }
 
     private func detailBadge(icon: String, title: String, value: String) -> some View {

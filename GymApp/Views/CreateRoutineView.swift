@@ -10,6 +10,7 @@ struct ExerciseDraft: Identifiable {
     var reps: String = "10"
     var restSeconds: Int = 60
     var pausePoints: [Int] = []
+    var notes: String = ""
 }
 
 // MARK: - Create / Edit Routine View
@@ -101,7 +102,7 @@ struct CreateRoutineView: View {
         routineName = routine.name
         drafts = routine.exercises
             .sorted { $0.sortOrder < $1.sortOrder }
-            .map { ExerciseDraft(name: $0.name, sets: $0.sets, reps: $0.reps, restSeconds: $0.restSeconds, pausePoints: $0.currentPausePoints) }
+            .map { ExerciseDraft(name: $0.name, sets: $0.sets, reps: $0.reps, restSeconds: $0.restSeconds, pausePoints: $0.currentPausePoints, notes: $0.currentNotes) }
     }
 
     // MARK: - Save
@@ -119,7 +120,7 @@ struct CreateRoutineView: View {
                 let template = ExerciseTemplate(
                     name: draft.name, sets: draft.sets, reps: draft.reps,
                     restSeconds: draft.restSeconds, sortOrder: index,
-                    pausePoints: draft.pausePoints
+                    pausePoints: draft.pausePoints, notes: draft.notes
                 )
                 routine.exercises.append(template)
             }
@@ -130,7 +131,7 @@ struct CreateRoutineView: View {
                 let template = ExerciseTemplate(
                     name: draft.name, sets: draft.sets, reps: draft.reps,
                     restSeconds: draft.restSeconds, sortOrder: index,
-                    pausePoints: draft.pausePoints
+                    pausePoints: draft.pausePoints, notes: draft.notes
                 )
                 newRoutine.exercises.append(template)
             }
@@ -166,6 +167,15 @@ struct ExerciseDraftRow: View {
                 if !draft.pausePoints.isEmpty {
                     statLabel(icon: "pause.circle.fill", text: "\(draft.pausePoints.count)x")
                 }
+            }
+            if !draft.notes.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: "note.text")
+                    Text(draft.notes)
+                        .lineLimit(1)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 4)
