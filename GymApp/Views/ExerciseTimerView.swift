@@ -156,17 +156,21 @@ struct ExerciseTimerView: View {
 
     // MARK: - Timer Ring & Display
 
+    private var activeTimerColor: Color {
+        isTimerPaused ? themeManager.secondaryColor : themeManager.accentColor
+    }
+
     private var timerDisplay: some View {
         ZStack {
             // Outer Ring Background
             Circle()
-                .stroke(themeManager.accentColor.opacity(0.2), lineWidth: 16)
+                .stroke(activeTimerColor.opacity(0.2), lineWidth: 16)
 
             // Progress Ring
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    themeManager.accentColor,
+                    activeTimerColor,
                     style: StrokeStyle(lineWidth: 16, lineCap: .round)
                 )
                 .rotationEffect(.degrees(-90))
