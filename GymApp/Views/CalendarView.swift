@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct CalendarView: View {
+    @Environment(ThemeManager.self) private var themeManager
     @Environment(\.modelContext) private var modelContext
     @Query private var workoutDays: [WorkoutDay]
 
@@ -148,6 +149,16 @@ struct CalendarView: View {
                     Text("\(day.exercises.count) exercise\(day.exercises.count == 1 ? "" : "s")")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+
+                    if let duration = day.durationSeconds {
+                        Label("Duration: \(formatDurationText(duration))", systemImage: "clock.fill")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(themeManager.completedColor)
+                    } else if day.workoutStartTime != nil {
+                        Label("Workout in progress…", systemImage: "timer")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(themeManager.accentColor)
+                    }
                 }
                 Spacer()
                 HStack(spacing: 8) {
@@ -235,6 +246,19 @@ struct CalendarView: View {
     func nextMonth() {
         withAnimation(.easeInOut(duration: 0.25)) {
             currentMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) ?? currentMonth
+        }
+    }
+
+    private func formatDurationText(_ totalSeconds: Int) -> String {
+        let h = totalSeconds / 3600
+        let m = (totalSeconds % 3600) / 60
+        let s = totalSeconds % 60
+        if h > 0 {
+            return "\(h)h \(m)m \(s)s"
+        } else if m > 0 {
+            return s > 0 ? "\(m)m \(s)s" : "\(m) min"
+        } else {
+            return "\(s) sec"
         }
     }
 }

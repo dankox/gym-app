@@ -158,6 +158,9 @@ struct WorkoutDayEditor: View {
 
     var body: some View {
         List {
+            // Workout Timer Section
+            workoutTimerSection
+
             // Exercises grouped by routine
             if sortedExercises.isEmpty {
                 Section("Exercises") {
@@ -217,11 +220,201 @@ struct WorkoutDayEditor: View {
             }
         }
         .listStyle(.insetGrouped)
+        .onAppear {
+            checkAutoFinish(newCount: completedCount)
+        }
+        .onChange(of: completedCount) { _, newCount in
+            checkAutoFinish(newCount: newCount)
+        }
         .sheet(item: $activeTimerExercise) { exercise in
             ExerciseTimerView(exercise: exercise)
         }
         .sheet(item: $exerciseToEdit) { exercise in
             EditWorkoutExerciseView(exercise: exercise)
+        }
+    }
+
+    // MARK: - Workout Timer Section
+
+    @ViewBuilder
+    private var workoutTimerSection: some View {
+        Section("Workout Timer") {
+            if let startTime = day.workoutStartTime {
+                TimelineView(.periodic(from: startTime, by: 1.0)) { context in
+                    let elapsed = max(0, Int(context.date.timeIntervalSince(startTime)))
+                    workoutInProgressCard(elapsed: elapsed)
+                }
+            } else if let duration = day.durationSeconds {
+                workoutCompletedCard(duration: duration)
+            } else {
+                workoutNotStartedCard
+            }
+        }
+    }
+
+    private var workoutNotStartedCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: "timer")
+                    .font(.title2)
+                    .foregroundStyle(themeManager.accentColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Workout Timer")
+                        .font(.headline)
+                    Text("Track total time spent on this workout")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Button {
+                startWorkout()
+            } label: {
+                Label("Start Workout", systemImage: "play.fill")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 4)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func workoutInProgressCard(elapsed: Int) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(themeManager.accentColor)
+                        .frame(width: 8, height: 8)
+                    Text("Workout In Progress")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(themeManager.accentColor)
+                }
+                Spacer()
+                Text("\(completedCount) / \(day.exercises.count) done")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(formatTimerDigits(elapsed))
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                Button {
+                    finishWorkoutManually()
+                } label: {
+                    Label("Finish Workout", systemImage: "checkmark.circle.fill")
+                        .font(.subheadline.bold())
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(themeManager.completedColor)
+            }
+
+            Text("Timer stops automatically when all exercises are completed.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func workoutCompletedCard(duration: Int) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(themeManager.completedColor)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Workout Completed!")
+                        .font(.headline)
+                    Text("Total time: \(formatDurationText(duration))")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(themeManager.completedColor)
+                }
+
+                Spacer()
+
+                Button {
+                    resetWorkoutTimer()
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.subheadline.bold())
+                }
+                .buttonStyle(.bordered)
+                .tint(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Workout Timer Helpers
+
+    private func startWorkout() {
+        if completedCount == day.exercises.count && !day.exercises.isEmpty {
+            for exercise in day.exercises {
+                exercise.isCompleted = false
+                exercise.completedSets = 0
+            }
+        }
+        day.durationSeconds = nil
+        day.workoutStartTime = Date()
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+    }
+
+    private func finishWorkoutManually() {
+        guard let startTime = day.workoutStartTime else { return }
+        let elapsed = max(1, Int(Date().timeIntervalSince(startTime)))
+        day.durationSeconds = elapsed
+        day.workoutStartTime = nil
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+    }
+
+    private func resetWorkoutTimer() {
+        day.workoutStartTime = nil
+        day.durationSeconds = nil
+    }
+
+    private func checkAutoFinish(newCount: Int) {
+        if let startTime = day.workoutStartTime,
+           newCount == day.exercises.count,
+           !day.exercises.isEmpty {
+            let elapsed = max(1, Int(Date().timeIntervalSince(startTime)))
+            day.durationSeconds = elapsed
+            day.workoutStartTime = nil
+            let generator = UINotificationFeedbackGenerator()
+            generator.notificationOccurred(.success)
+        }
+    }
+
+    private func formatTimerDigits(_ totalSeconds: Int) -> String {
+        let h = totalSeconds / 3600
+        let m = (totalSeconds % 3600) / 60
+        let s = totalSeconds % 60
+        if h > 0 {
+            return String(format: "%02d:%02d:%02d", h, m, s)
+        } else {
+            return String(format: "%02d:%02d", m, s)
+        }
+    }
+
+    private func formatDurationText(_ totalSeconds: Int) -> String {
+        let h = totalSeconds / 3600
+        let m = (totalSeconds % 3600) / 60
+        let s = totalSeconds % 60
+        if h > 0 {
+            return "\(h)h \(m)m \(s)s"
+        } else if m > 0 {
+            return s > 0 ? "\(m)m \(s)s" : "\(m) min"
+        } else {
+            return "\(s) sec"
         }
     }
 
