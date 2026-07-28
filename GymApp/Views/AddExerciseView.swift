@@ -9,7 +9,7 @@ struct AddExerciseView: View {
 
     @State private var name = ""
     @State private var sets = 3
-    @State private var reps = 10
+    @State private var reps = "10"
     @State private var restSeconds = 60
     @State private var pausePoints: [Int] = []
     @State private var newPauseSeconds = 30
@@ -34,7 +34,9 @@ struct AddExerciseView: View {
                     HStack {
                         Text("Reps")
                         Spacer()
-                        Stepper("\(reps)", value: $reps, in: 1...200)
+                        TextField("e.g. 10, 5 / 3, 5, 3, 5", text: $reps)
+                            .multilineTextAlignment(.leading)
+                            .textInputAutocapitalization(.never)
                             .fixedSize()
                     }
                 }
@@ -158,7 +160,8 @@ struct AddExerciseView: View {
         var result = draft ?? ExerciseDraft()
         result.name = name.trimmingCharacters(in: .whitespaces)
         result.sets = sets
-        result.reps = reps
+        let trimmedReps = reps.trimmingCharacters(in: .whitespaces)
+        result.reps = trimmedReps.isEmpty ? "10" : trimmedReps
         result.restSeconds = restSeconds
         result.pausePoints = pausePoints.filter { $0 < restSeconds }.sorted()
         onSave(result)

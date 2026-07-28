@@ -303,7 +303,9 @@ struct WorkoutExerciseRow: View {
 
                 HStack(spacing: 16) {
                     statBadge(icon: "repeat", label: "\(exercise.sets)x")
-                    statBadge(icon: "number", label: "\(exercise.reps)x")
+                    if !isLongReps {
+                        statBadge(icon: "number", label: exercise.reps)
+                    }
                     statBadge(icon: "timer", label: restLabel)
                     if !exercise.currentPausePoints.isEmpty {
                         statBadge(icon: "pause.circle.fill", label: "\(exercise.currentPausePoints.count)x")
@@ -311,6 +313,12 @@ struct WorkoutExerciseRow: View {
                 }
                 .opacity(exercise.isCompleted ? 0.5 : 1.0)
                 .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
+
+                if isLongReps {
+                    statBadge(icon: "number", label: exercise.reps)
+                        .opacity(exercise.isCompleted ? 0.5 : 1.0)
+                        .animation(.easeInOut(duration: 0.2), value: exercise.isCompleted)
+                }
 
                 if exercise.currentCompletedSets > 0 && !exercise.isCompleted {
                     Text("Sets completed: \(exercise.currentCompletedSets) / \(exercise.sets)")
@@ -350,10 +358,16 @@ struct WorkoutExerciseRow: View {
         .padding(.vertical, 4)
     }
 
+    private var isLongReps: Bool {
+        exercise.reps.trimmingCharacters(in: .whitespaces).count > 6
+    }
+
     func statBadge(icon: String, label: String) -> some View {
         HStack(spacing: 4) {
             Image(systemName: icon)
             Text(label)
+                .lineLimit(1)
+                .truncationMode(.tail)
         }
         .font(.caption)
         .foregroundStyle(.secondary)

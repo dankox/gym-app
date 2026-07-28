@@ -9,7 +9,7 @@ struct EditWorkoutExerciseView: View {
 
     @State private var name: String = ""
     @State private var sets: Int = 3
-    @State private var reps: Int = 10
+    @State private var reps: String = "10"
     @State private var restSeconds: Int = 60
     @State private var pausePoints: [Int] = []
     @State private var newPauseSeconds: Int = 30
@@ -32,7 +32,9 @@ struct EditWorkoutExerciseView: View {
                     HStack {
                         Text("Reps")
                         Spacer()
-                        Stepper("\(reps)", value: $reps, in: 1...200)
+                        TextField("e.g. 10, 5 / 3, 5, 3, 5", text: $reps)
+                            .multilineTextAlignment(.leading)
+                            .textInputAutocapitalization(.never)
                             .fixedSize()
                     }
                 }
@@ -156,7 +158,8 @@ struct EditWorkoutExerciseView: View {
 
         exercise.name = trimmedName
         exercise.sets = sets
-        exercise.reps = reps
+        let trimmedReps = reps.trimmingCharacters(in: .whitespaces)
+        exercise.reps = trimmedReps.isEmpty ? "10" : trimmedReps
         exercise.restSeconds = restSeconds
         exercise.pausePoints = pausePoints.filter { $0 < restSeconds }.sorted()
 

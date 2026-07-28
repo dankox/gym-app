@@ -5,13 +5,13 @@ import Foundation
 class ExerciseTemplate {
     var name: String
     var sets: Int
-    var reps: Int
+    var reps: String
     var restSeconds: Int
     var sortOrder: Int
     var pausePoints: [Int]?
     var routine: Routine?
 
-    init(name: String, sets: Int, reps: Int, restSeconds: Int, sortOrder: Int = 0, pausePoints: [Int]? = []) {
+    init(name: String, sets: Int, reps: String, restSeconds: Int, sortOrder: Int = 0, pausePoints: [Int]? = []) {
         self.name = name
         self.sets = sets
         self.reps = reps

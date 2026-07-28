@@ -5,7 +5,7 @@ import Foundation
 class WorkoutExercise {
     var name: String
     var sets: Int
-    var reps: Int
+    var reps: String
     var restSeconds: Int
     var sortOrder: Int
     var isCompleted: Bool
@@ -17,7 +17,7 @@ class WorkoutExercise {
     init(
         name: String,
         sets: Int,
-        reps: Int,
+        reps: String,
         restSeconds: Int,
         sortOrder: Int = 0,
         completedSets: Int? = 0,

@@ -68,6 +68,10 @@ struct ExerciseTimerView: View {
         }
     }
 
+    private var isLongReps: Bool {
+        exercise.reps.trimmingCharacters(in: .whitespaces).count > 15
+    }
+
     // MARK: - Exercise Header Card
 
     private var exerciseHeaderCard: some View {
@@ -78,13 +82,19 @@ struct ExerciseTimerView: View {
 
             HStack(spacing: 16) {
                 detailBadge(icon: "repeat", title: "Set", value: "\(currentSetNumber) of \(exercise.sets)")
-                detailBadge(icon: "number", title: "Reps", value: "\(exercise.reps)")
+                if !isLongReps {
+                    detailBadge(icon: "number", title: "Reps", value: "\(exercise.reps)")
+                }
                 detailBadge(icon: "timer", title: "Rest", value: restLabel(for: exercise.restSeconds))
                 if !exercise.currentPausePoints.isEmpty {
                     detailBadge(icon: "pause.circle.fill", title: "Pauses", value: "\(exercise.currentPausePoints.count)")
                 }
             }
             .padding(.top, 4)
+
+            if isLongReps {
+                detailBadge(icon: "number", title: "Reps", value: exercise.reps)
+            }
         }
         .padding()
         .frame(maxWidth: .infinity)
@@ -105,6 +115,8 @@ struct ExerciseTimerView: View {
 
             Text(value)
                 .font(.subheadline.bold())
+                .lineLimit(1)
+                .truncationMode(.tail)
         }
     }
 

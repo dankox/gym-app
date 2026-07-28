@@ -7,7 +7,7 @@ struct ExerciseDraft: Identifiable {
     var id = UUID()
     var name: String = ""
     var sets: Int = 3
-    var reps: Int = 10
+    var reps: String = "10"
     var restSeconds: Int = 60
     var pausePoints: [Int] = []
 }
@@ -160,11 +160,11 @@ struct ExerciseDraftRow: View {
                 .font(.headline)
                 .foregroundStyle(draft.name.isEmpty ? .secondary : .primary)
             HStack(spacing: 16) {
-                statLabel(icon: "repeat", text: "\(draft.sets) sets")
-                statLabel(icon: "number", text: "\(draft.reps) reps")
+                statLabel(icon: "repeat", text: "\(draft.sets)x")
+                statLabel(icon: "number", text: draft.reps)
                 statLabel(icon: "timer", text: restLabel(for: draft.restSeconds))
                 if !draft.pausePoints.isEmpty {
-                    statLabel(icon: "pause.circle.fill", text: "\(draft.pausePoints.count) pause\(draft.pausePoints.count == 1 ? "" : "s")")
+                    statLabel(icon: "pause.circle.fill", text: "\(draft.pausePoints.count)x")
                 }
             }
         }
@@ -184,8 +184,8 @@ struct ExerciseDraftRow: View {
         if seconds >= 60 {
             let m = seconds / 60
             let s = seconds % 60
-            return s == 0 ? "\(m)m rest" : "\(m)m\(s)s rest"
+            return s == 0 ? "\(m)m" : "\(m)m\(s)s"
         }
-        return "\(seconds)s rest"
+        return "\(seconds)s"
     }
 }
