@@ -519,7 +519,7 @@ struct WorkoutExerciseRow: View {
             }
             .buttonStyle(.plain)
 
-            // Exercise details (tappable to edit)
+            // Exercise details (tappable to start rest timer)
             VStack(alignment: .leading, spacing: 5) {
                 Text(exercise.name)
                     .font(.headline)
@@ -567,22 +567,12 @@ struct WorkoutExerciseRow: View {
             }
             .contentShape(Rectangle())
             .onTapGesture {
-                onEdit(exercise)
+                onStartTimer(exercise)
             }
 
             Spacer(minLength: 4)
 
             HStack(spacing: 10) {
-                // Edit button
-                Button {
-                    onEdit(exercise)
-                } label: {
-                    Image(systemName: "pencil.circle")
-                        .font(.title2)
-                        .foregroundStyle(Color.secondary)
-                }
-                .buttonStyle(.plain)
-
                 // Play button for rest timer
                 Button {
                     onStartTimer(exercise)
@@ -598,6 +588,16 @@ struct WorkoutExerciseRow: View {
                     Image(systemName: iconName)
                         .font(.title2)
                         .foregroundStyle(iconColor)
+                }
+                .buttonStyle(.plain)
+
+                // Edit button
+                Button {
+                    onEdit(exercise)
+                } label: {
+                    Image(systemName: "pencil.circle")
+                        .font(.title2)
+                        .foregroundStyle(Color.secondary)
                 }
                 .buttonStyle(.plain)
             }
