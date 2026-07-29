@@ -13,6 +13,42 @@ struct ExerciseTimerView: View {
         RestTimerManager.shared
     }
 
+    private var isTimerActiveForThisExercise: Bool {
+        timerManager.activeExerciseId == exercise.id && (timerManager.isTimerRunning || timerManager.isTimerPaused)
+    }
+
+    private var displayTimeRemaining: Int {
+        if isTimerActiveForThisExercise {
+            return timerManager.timeRemaining
+        } else {
+            return max(exercise.restSeconds, 1)
+        }
+    }
+
+    private var displayTotalRestSeconds: Int {
+        if isTimerActiveForThisExercise {
+            return timerManager.totalRestSeconds
+        } else {
+            return max(exercise.restSeconds, 1)
+        }
+    }
+
+    private var displayProgress: Double {
+        if isTimerActiveForThisExercise {
+            return timerManager.progress
+        } else {
+            return 1.0
+        }
+    }
+
+    private var isTimerRunning: Bool {
+        isTimerActiveForThisExercise && timerManager.isTimerRunning
+    }
+
+    private var isTimerPaused: Bool {
+        isTimerActiveForThisExercise && timerManager.isTimerPaused
+    }
+
     private var currentSetNumber: Int {
         min(exercise.currentCompletedSets + 1, exercise.sets)
     }
@@ -148,82 +184,105 @@ struct ExerciseTimerView: View {
     // MARK: - Timer Ring & Display
 
     private var activeTimerColor: Color {
-        timerManager.isTimerPaused ? themeManager.secondaryColor : themeManager.accentColor
+        isTimerPaused ? themeManager.secondaryColor : themeManager.accentColor
     }
 
     private var timerDisplay: some View {
-        ZStack {
-            // Outer Ring Background
-            Circle()
-                .stroke(activeTimerColor.opacity(0.2), lineWidth: 16)
-
-            // Progress Ring
-            Circle()
-                .trim(from: 0, to: timerManager.progress)
-                .stroke(
-                    activeTimerColor,
-                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-
-            // Pause Point Markers on Ring
-            ForEach(exercise.currentPausePoints, id: \.self) { pp in
-                let remainingProgress = Double(timerManager.totalRestSeconds - pp) / Double(timerManager.totalRestSeconds)
-                let angleDegrees = remainingProgress * 360.0
-                let isPassed = timerManager.triggeredPausePoints.contains(pp)
-
+        Button {
+            handleTimerCircleTap()
+        } label: {
+            ZStack {
+                // Outer Ring Background
                 Circle()
-                    .fill(isPassed ? Color.secondary : themeManager.secondaryColor)
-                    .frame(width: 12, height: 12)
-                    .overlay(
-                        Circle().stroke(Color.white, lineWidth: 2)
+                    .stroke(activeTimerColor.opacity(0.2), lineWidth: 16)
+
+                // Faded Background Play/Pause Icon
+                Image(systemName: isTimerRunning ? (isTimerPaused ? "play.fill" : "pause.fill") : "play.fill")
+                    .font(.system(size: 110, weight: .bold))
+                    .foregroundStyle(activeTimerColor.opacity(0.12))
+                    .offset(x: !isTimerRunning ? 5 : 0)
+
+                // Progress Ring
+                Circle()
+                    .trim(from: 0, to: displayProgress)
+                    .stroke(
+                        activeTimerColor,
+                        style: StrokeStyle(lineWidth: 16, lineCap: .round)
                     )
-                    .offset(y: -120)
-                    .rotationEffect(.degrees(angleDegrees))
-            }
+                    .rotationEffect(.degrees(-90))
 
-            VStack(spacing: 8) {
-                Text(formatTime(timerManager.timeRemaining))
-                    .font(.system(size: 56, weight: .bold, design: .rounded))
-                    .monospacedDigit()
+                // Pause Point Markers on Ring
+                ForEach(exercise.currentPausePoints, id: \.self) { pp in
+                    let remainingProgress = Double(displayTotalRestSeconds - pp) / Double(displayTotalRestSeconds)
+                    let angleDegrees = remainingProgress * 360.0
+                    let isPassed = isTimerActiveForThisExercise && timerManager.triggeredPausePoints.contains(pp)
 
-                if let autoPauseMessage = timerManager.autoPauseMessage {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pause.circle.fill")
-                        Text(autoPauseMessage)
-                    }
-                    .font(.caption.bold())
-                    .foregroundStyle(themeManager.secondaryColor)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(themeManager.secondaryColor.opacity(0.15), in: Capsule())
-                } else if timerManager.isTimerRunning && !timerManager.isTimerPaused {
-                    Text("Resting...")
-                        .font(.headline)
-                        .foregroundStyle(themeManager.accentColor)
-                } else if timerManager.isTimerPaused {
-                    Text("Paused")
-                        .font(.headline)
+                    Circle()
+                        .fill(isPassed ? Color.secondary : themeManager.secondaryColor)
+                        .frame(width: 12, height: 12)
+                        .overlay(
+                            Circle().stroke(Color.white, lineWidth: 2)
+                        )
+                        .offset(y: -120)
+                        .rotationEffect(.degrees(angleDegrees))
+                }
+
+                VStack(spacing: 8) {
+                    Text(formatTime(displayTimeRemaining))
+                        .font(.system(size: 56, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(.primary)
+
+                    if let autoPauseMessage = isTimerActiveForThisExercise ? timerManager.autoPauseMessage : nil {
+                        HStack(spacing: 4) {
+                            Image(systemName: "pause.circle.fill")
+                            Text(autoPauseMessage)
+                        }
+                        .font(.caption.bold())
                         .foregroundStyle(themeManager.secondaryColor)
-                } else if exercise.currentCompletedSets >= exercise.sets {
-                    Text("All sets completed!")
-                        .font(.headline)
-                        .foregroundStyle(themeManager.completedColor)
-                } else {
-                    Text("Ready for Set \(currentSetNumber) Rest")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(themeManager.secondaryColor.opacity(0.15), in: Capsule())
+                    } else if isTimerRunning {
+                        Text("Resting...")
+                            .font(.headline)
+                            .foregroundStyle(themeManager.accentColor)
+                    } else if isTimerPaused {
+                        Text("Paused")
+                            .font(.headline)
+                            .foregroundStyle(themeManager.secondaryColor)
+                    } else if exercise.currentCompletedSets >= exercise.sets {
+                        Text("All sets completed!")
+                            .font(.headline)
+                            .foregroundStyle(themeManager.completedColor)
+                    } else {
+                        Text("Ready for Set \(currentSetNumber) Rest")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
+            .contentShape(Circle())
         }
+        .buttonStyle(.plain)
         .frame(width: 240, height: 240)
+    }
+
+    private func handleTimerCircleTap() {
+        if !isTimerRunning && !isTimerPaused {
+            timerManager.startTimer(for: exercise)
+        } else if isTimerPaused {
+            timerManager.resumeTimer()
+        } else {
+            timerManager.pauseTimer()
+        }
     }
 
     // MARK: - Controls
 
     private var timerControls: some View {
         VStack(spacing: 12) {
-            if !timerManager.isTimerRunning && !timerManager.isTimerPaused {
+            if !isTimerRunning && !isTimerPaused {
                 Button {
                     timerManager.startTimer(for: exercise)
                 } label: {
@@ -243,15 +302,15 @@ struct ExerciseTimerView: View {
             } else {
                 HStack(spacing: 16) {
                     Button {
-                        if timerManager.isTimerPaused {
+                        if isTimerPaused {
                             timerManager.resumeTimer()
                         } else {
                             timerManager.pauseTimer()
                         }
                     } label: {
                         Label(
-                            timerManager.isTimerPaused ? "Resume" : "Pause",
-                            systemImage: timerManager.isTimerPaused ? "play.fill" : "pause.fill"
+                            isTimerPaused ? "Resume" : "Pause",
+                            systemImage: isTimerPaused ? "play.fill" : "pause.fill"
                         )
                         .frame(maxWidth: .infinity)
                     }

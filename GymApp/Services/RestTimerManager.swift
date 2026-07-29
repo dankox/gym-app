@@ -92,9 +92,19 @@ final class RestTimerManager {
 
     // MARK: - Database Sync
     func syncWithDatabase(modelContext: ModelContext) {
+        // If timer is already actively running or paused in memory with activeExercise, just update state
+        if (isTimerRunning || isTimerPaused) && activeExercise != nil {
+            updateState(modelContext: modelContext, playFeedback: false)
+            return
+        }
+
         loadFromUserDefaults()
         guard let activeId = activeExerciseId, !activeId.isEmpty else {
-            stopAndResetTimer()
+            return
+        }
+
+        if activeExercise?.id == activeId {
+            updateState(modelContext: modelContext, playFeedback: false)
             return
         }
 
@@ -105,9 +115,9 @@ final class RestTimerManager {
                 stopAndResetTimer()
                 return
             }
-            updateState(modelContext: modelContext, playFeedback: true)
-        } else {
-            stopAndResetTimer()
+            updateState(modelContext: modelContext, playFeedback: false)
+        } else if isTimerRunning || isTimerPaused {
+            updateState(modelContext: modelContext, playFeedback: false)
         }
     }
 
@@ -118,26 +128,36 @@ final class RestTimerManager {
             return
         }
 
-        stopAndResetTimer()
+        if isTimerRunning || isTimerPaused {
+            stopAndResetTimer()
+        }
+
         self.activeExercise = exercise
         self.activeExerciseId = exercise.id
         self.totalRestSeconds = max(exercise.restSeconds, 1)
-        self.remainingDuration = Double(totalRestSeconds)
-        self.timeRemaining = totalRestSeconds
+        self.remainingDuration = Double(self.totalRestSeconds)
+        self.timeRemaining = self.totalRestSeconds
         self.progress = 1.0
+        self.isTimerRunning = false
+        self.isTimerPaused = false
+        self.triggeredPausePoints = []
+        self.autoPauseMessage = nil
         saveToUserDefaults()
     }
 
     // MARK: - Timer Actions
     func startTimer(for exercise: WorkoutExercise? = nil) {
         if let exercise = exercise {
-            prepareTimer(for: exercise)
+            self.activeExercise = exercise
+            self.activeExerciseId = exercise.id
         }
         guard let activeExercise = activeExercise else { return }
 
         let rest = max(activeExercise.restSeconds, 1)
         totalRestSeconds = rest
         remainingDuration = Double(rest)
+        timeRemaining = rest
+        progress = 1.0
         startDate = Date()
         endDate = Date().addingTimeInterval(remainingDuration)
 
@@ -261,7 +281,7 @@ final class RestTimerManager {
         guard let endDate = self.endDate else { return }
 
         let now = Date()
-        let diff = self.endDate!.timeIntervalSince(now)
+        let diff = endDate.timeIntervalSince(now)
 
         if diff > 0 {
             let start = startDate ?? now.addingTimeInterval(-(Double(totalRestSeconds) - diff))
@@ -302,9 +322,7 @@ final class RestTimerManager {
             progress = max(0.0, min(1.0, diff / Double(totalRestSeconds)))
             remainingDuration = diff
 
-            if timer == nil {
-                startHighFrequencyTimer()
-            }
+            startHighFrequencyTimer()
         } else {
             timeRemaining = 0
             progress = 0.0
@@ -315,11 +333,10 @@ final class RestTimerManager {
     // MARK: - High Frequency Timer
     private func startHighFrequencyTimer() {
         stopHighFrequencyTimer()
+        guard isTimerRunning && !isTimerPaused else { return }
         let t = Timer(timeInterval: 0.03, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            if let activeId = self.activeExerciseId, !activeId.isEmpty {
-                self.tick()
-            }
+            self.tick()
         }
         RunLoop.main.add(t, forMode: .common)
         timer = t
@@ -368,6 +385,15 @@ final class RestTimerManager {
             progress = 0.0
             if let exercise = activeExercise, let context = exercise.modelContext {
                 completeCurrentSet(modelContext: context, playFeedback: true)
+            } else if let activeId = activeExerciseId, !activeId.isEmpty {
+                if let exercise = activeExercise {
+                    let newCompleted = exercise.currentCompletedSets + 1
+                    exercise.completedSets = newCompleted
+                    if newCompleted >= exercise.sets {
+                        exercise.isCompleted = true
+                    }
+                }
+                stopAndResetTimer()
             } else {
                 stopAndResetTimer()
             }
