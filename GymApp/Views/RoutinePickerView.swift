@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct RoutinePickerView: View {
     @Environment(ThemeManager.self) private var themeManager
@@ -11,6 +12,9 @@ struct RoutinePickerView: View {
     @Query private var workoutDays: [WorkoutDay]
 
     @State private var showCreateRoutine = false
+    @State private var showFileImporter = false
+    @State private var alertMessage: String? = nil
+    @State private var showAlert = false
 
     var body: some View {
         NavigationStack {
@@ -39,6 +43,18 @@ struct RoutinePickerView: View {
             .sheet(isPresented: $showCreateRoutine) {
                 CreateRoutineView()
             }
+            .fileImporter(
+                isPresented: $showFileImporter,
+                allowedContentTypes: [.json, .gymJson, UTType(importedAs: "public.json")],
+                allowsMultipleSelection: false
+            ) { result in
+                handleImportResult(result)
+            }
+            .alert("Routine Import", isPresented: $showAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(alertMessage ?? "")
+            }
         }
     }
 
@@ -51,6 +67,14 @@ struct RoutinePickerView: View {
                     showCreateRoutine = true
                 } label: {
                     Label("Create New Routine", systemImage: "plus.circle.fill")
+                        .foregroundStyle(themeManager.accentColor)
+                        .fontWeight(.medium)
+                }
+
+                Button {
+                    showFileImporter = true
+                } label: {
+                    Label("Import from File (.gym.json)", systemImage: "square.and.arrow.down.fill")
                         .foregroundStyle(themeManager.accentColor)
                         .fontWeight(.medium)
                 }
@@ -87,7 +111,7 @@ struct RoutinePickerView: View {
     // MARK: - Empty State
 
     var emptyState: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: 24) {
             Spacer()
             Image(systemName: "list.bullet.clipboard")
                 .font(.system(size: 72))
@@ -95,25 +119,64 @@ struct RoutinePickerView: View {
             VStack(spacing: 8) {
                 Text("No routines saved")
                     .font(.title2.bold())
-                Text("Create your first routine to get started.")
+                Text("Create a routine or import one from a file.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            Button {
-                showCreateRoutine = true
-            } label: {
-                Label("Create New Routine", systemImage: "plus.circle.fill")
-                    .frame(maxWidth: 280)
+            VStack(spacing: 12) {
+                Button {
+                    showCreateRoutine = true
+                } label: {
+                    Label("Create New Routine", systemImage: "plus.circle.fill")
+                        .frame(maxWidth: 280)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                Button {
+                    showFileImporter = true
+                } label: {
+                    Label("Import from File (.gym.json)", systemImage: "square.and.arrow.down")
+                        .frame(maxWidth: 280)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
             Spacer()
         }
         .padding()
     }
 
     // MARK: - Import Logic
+
+    private func handleImportResult(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            guard url.startAccessingSecurityScopedResource() else {
+                alertMessage = "Permission denied to access file."
+                showAlert = true
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            do {
+                let data = try Data(contentsOf: url)
+                let importedRoutines = try RoutineTransferService.decodeRoutines(from: data)
+                for r in importedRoutines {
+                    modelContext.insert(r)
+                    importRoutine(r)
+                }
+            } catch {
+                alertMessage = "Failed to import routine: \(error.localizedDescription)"
+                showAlert = true
+            }
+        case .failure(let error):
+            alertMessage = "File selection error: \(error.localizedDescription)"
+            showAlert = true
+        }
+    }
 
     func importRoutine(_ routine: Routine) {
         let workoutDay: WorkoutDay

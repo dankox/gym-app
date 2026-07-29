@@ -26,6 +26,7 @@ struct CreateRoutineView: View {
     @State private var drafts: [ExerciseDraft] = []
     @State private var showAddExercise = false
     @State private var draftToEdit: ExerciseDraft?
+    @State private var shareURLItem: IdentifiableURL? = nil
 
     private var isEditing: Bool { routine != nil }
 
@@ -67,15 +68,28 @@ struct CreateRoutineView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save", action: save)
-                        .fontWeight(.semibold)
-                        .disabled(routineName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    HStack(spacing: 12) {
+                        if isEditing || !drafts.isEmpty {
+                            Button {
+                                exportCurrentRoutine()
+                            } label: {
+                                Image(systemName: "square.and.arrow.up")
+                                    .foregroundStyle(themeManager.completedColor)
+                            }
+                        }
+                        Button("Save", action: save)
+                            .fontWeight(.semibold)
+                            .disabled(routineName.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
                 }
                 if !drafts.isEmpty {
                     ToolbarItem(placement: .bottomBar) {
                         EditButton()
                     }
                 }
+            }
+            .sheet(item: $shareURLItem) { item in
+                ActivityView(activityItems: [item.url])
             }
             .sheet(isPresented: $showAddExercise) {
                 AddExerciseView { newDraft in
@@ -103,6 +117,29 @@ struct CreateRoutineView: View {
         drafts = routine.exercises
             .sorted { $0.sortOrder < $1.sortOrder }
             .map { ExerciseDraft(name: $0.name, sets: $0.sets, reps: $0.reps, restSeconds: $0.restSeconds, pausePoints: $0.currentPausePoints, notes: $0.currentNotes) }
+    }
+
+    // MARK: - Export Current Routine
+
+    private func exportCurrentRoutine() {
+        let name = routineName.trimmingCharacters(in: .whitespaces)
+        let tempRoutine = Routine(name: name.isEmpty ? "New Routine" : name)
+        for (index, draft) in drafts.enumerated() {
+            let template = ExerciseTemplate(
+                name: draft.name.isEmpty ? "Unnamed Exercise" : draft.name,
+                sets: draft.sets,
+                reps: draft.reps,
+                restSeconds: draft.restSeconds,
+                sortOrder: index,
+                pausePoints: draft.pausePoints,
+                notes: draft.notes.isEmpty ? nil : draft.notes
+            )
+            tempRoutine.exercises.append(template)
+        }
+
+        if let url = try? RoutineTransferService.createTemporaryFileURL(for: tempRoutine) {
+            shareURLItem = IdentifiableURL(url: url)
+        }
     }
 
     // MARK: - Save

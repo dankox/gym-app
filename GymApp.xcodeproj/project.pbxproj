@@ -24,6 +24,7 @@
 		AABB001000000010AABB0010 /* EditWorkoutExerciseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001000000010BBCC0010 /* EditWorkoutExerciseView.swift */; };
 		AABB001100000011AABB0011 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001100000011BBCC0011 /* ThemeManager.swift */; };
 		AABB001200000012AABB0012 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001200000012BBCC0012 /* SettingsView.swift */; };
+		AABB001300000013AABB0013 /* RoutineTransferService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001300000013BBCC0013 /* RoutineTransferService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,7 @@
 		BBCC001000000010BBCC0010 /* EditWorkoutExerciseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditWorkoutExerciseView.swift; sourceTree = "<group>"; };
 		BBCC001100000011BBCC0011 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		BBCC001200000012BBCC0012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		BBCC001300000013BBCC0013 /* RoutineTransferService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/RoutineTransferService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +76,7 @@
 				CCDD000300000003CCDD0003 /* Models */,
 				CCDD000400000004CCDD0004 /* Views */,
 				CCDD000600000006CCDD0006 /* Theme */,
+				BBCC001300000013BBCC0013 /* RoutineTransferService.swift */,
 				BBCC000D0000000DBBCC000D /* Assets.xcassets */,
 			);
 			path = GymApp;
@@ -207,6 +210,7 @@
 				AABB001000000010AABB0010 /* EditWorkoutExerciseView.swift in Sources */,
 				AABB001100000011AABB0011 /* ThemeManager.swift in Sources */,
 				AABB001200000012AABB0012 /* SettingsView.swift in Sources */,
+				AABB001300000013AABB0013 /* RoutineTransferService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,8 +343,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K22Y3287JQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -355,6 +361,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dankox.GymApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -366,8 +373,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = K22Y3287JQ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -382,6 +391,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.dankox.GymApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
