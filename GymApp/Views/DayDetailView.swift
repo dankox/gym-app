@@ -111,6 +111,7 @@ struct DayDetailView: View {
 struct WorkoutDayEditor: View {
     @Environment(ThemeManager.self) private var themeManager
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Bindable var day: WorkoutDay
 
     @State private var activeTimerExercise: WorkoutExercise? = nil
@@ -221,7 +222,15 @@ struct WorkoutDayEditor: View {
         }
         .listStyle(.insetGrouped)
         .onAppear {
+            RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
             checkAutoFinish(newCount: completedCount)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
+            } else if newPhase == .background || newPhase == .inactive {
+                RestTimerManager.shared.saveToUserDefaults()
+            }
         }
         .onChange(of: completedCount) { _, newCount in
             checkAutoFinish(newCount: newCount)
@@ -554,9 +563,17 @@ struct WorkoutExerciseRow: View {
                 Button {
                     onStartTimer(exercise)
                 } label: {
-                    Image(systemName: "play.circle.fill")
+                    let isCurrentActive = RestTimerManager.shared.activeExerciseId == exercise.id && RestTimerManager.shared.isTimerRunning
+                    let iconName = isCurrentActive
+                        ? (RestTimerManager.shared.isTimerPaused ? "pause.circle.fill" : "timer.circle.fill")
+                        : "play.circle.fill"
+                    let iconColor = isCurrentActive
+                        ? (RestTimerManager.shared.isTimerPaused ? themeManager.secondaryColor : themeManager.accentColor)
+                        : themeManager.accentColor
+
+                    Image(systemName: iconName)
                         .font(.title2)
-                        .foregroundStyle(themeManager.accentColor)
+                        .foregroundStyle(iconColor)
                 }
                 .buttonStyle(.plain)
             }

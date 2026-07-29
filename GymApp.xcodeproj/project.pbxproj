@@ -25,6 +25,7 @@
 		AABB001100000011AABB0011 /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001100000011BBCC0011 /* ThemeManager.swift */; };
 		AABB001200000012AABB0012 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001200000012BBCC0012 /* SettingsView.swift */; };
 		AABB001300000013AABB0013 /* RoutineTransferService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001300000013BBCC0013 /* RoutineTransferService.swift */; };
+		AABB001400000014AABB0014 /* RestTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001400000014BBCC0014 /* RestTimerManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -47,6 +48,7 @@
 		BBCC001100000011BBCC0011 /* ThemeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeManager.swift; sourceTree = "<group>"; };
 		BBCC001200000012BBCC0012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		BBCC001300000013BBCC0013 /* RoutineTransferService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/RoutineTransferService.swift; sourceTree = "<group>"; };
+		BBCC001400000014BBCC0014 /* RestTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/RestTimerManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +79,7 @@
 				CCDD000400000004CCDD0004 /* Views */,
 				CCDD000600000006CCDD0006 /* Theme */,
 				BBCC001300000013BBCC0013 /* RoutineTransferService.swift */,
+				BBCC001400000014BBCC0014 /* RestTimerManager.swift */,
 				BBCC000D0000000DBBCC000D /* Assets.xcassets */,
 			);
 			path = GymApp;
@@ -211,6 +214,7 @@
 				AABB001100000011AABB0011 /* ThemeManager.swift in Sources */,
 				AABB001200000012AABB0012 /* SettingsView.swift in Sources */,
 				AABB001300000013AABB0013 /* RoutineTransferService.swift in Sources */,
+				AABB001400000014AABB0014 /* RestTimerManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

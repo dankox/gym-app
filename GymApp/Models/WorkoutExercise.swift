@@ -3,6 +3,7 @@ import Foundation
 
 @Model
 class WorkoutExercise {
+    var id: String
     var name: String
     var sets: Int
     var reps: String
@@ -16,6 +17,7 @@ class WorkoutExercise {
     var workoutDay: WorkoutDay?
 
     init(
+        id: String = UUID().uuidString,
         name: String,
         sets: Int,
         reps: String,
@@ -26,6 +28,7 @@ class WorkoutExercise {
         pausePoints: [Int]? = [],
         notes: String? = nil
     ) {
+        self.id = id
         self.name = name
         self.sets = sets
         self.reps = reps

@@ -1,32 +1,16 @@
 import SwiftUI
 import AudioToolbox
 import UIKit
+import SwiftData
 
 struct ExerciseTimerView: View {
     @Environment(ThemeManager.self) private var themeManager
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Bindable var exercise: WorkoutExercise
 
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var timeRemaining: Int
-    @State private var totalRestSeconds: Int
-    @State private var progress: Double = 1.0
-    @State private var isTimerRunning: Bool = false
-    @State private var isTimerPaused: Bool = false
-    @State private var timer: Timer? = nil
-
-    @State private var endDate: Date? = nil
-    @State private var remainingDuration: Double = 0.0
-    @State private var triggeredPausePoints: Set<Int> = []
-    @State private var autoPauseMessage: String? = nil
-
-    init(exercise: WorkoutExercise) {
-        self.exercise = exercise
-        let rest = max(exercise.restSeconds, 1)
-        _totalRestSeconds = State(initialValue: rest)
-        _timeRemaining = State(initialValue: rest)
-        _progress = State(initialValue: 1.0)
-        _remainingDuration = State(initialValue: Double(rest))
+    private var timerManager: RestTimerManager {
+        RestTimerManager.shared
     }
 
     private var currentSetNumber: Int {
@@ -60,13 +44,20 @@ struct ExerciseTimerView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close") {
-                        stopTimer()
                         dismiss()
                     }
                 }
             }
-            .onDisappear {
-                stopTimer()
+            .onAppear {
+                timerManager.prepareTimer(for: exercise)
+                timerManager.syncWithDatabase(modelContext: modelContext)
+            }
+            .onChange(of: exercise.isCompleted) { _, isDone in
+                if isDone {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        dismiss()
+                    }
+                }
             }
         }
     }
@@ -157,7 +148,7 @@ struct ExerciseTimerView: View {
     // MARK: - Timer Ring & Display
 
     private var activeTimerColor: Color {
-        isTimerPaused ? themeManager.secondaryColor : themeManager.accentColor
+        timerManager.isTimerPaused ? themeManager.secondaryColor : themeManager.accentColor
     }
 
     private var timerDisplay: some View {
@@ -168,7 +159,7 @@ struct ExerciseTimerView: View {
 
             // Progress Ring
             Circle()
-                .trim(from: 0, to: progress)
+                .trim(from: 0, to: timerManager.progress)
                 .stroke(
                     activeTimerColor,
                     style: StrokeStyle(lineWidth: 16, lineCap: .round)
@@ -177,9 +168,9 @@ struct ExerciseTimerView: View {
 
             // Pause Point Markers on Ring
             ForEach(exercise.currentPausePoints, id: \.self) { pp in
-                let remainingProgress = Double(totalRestSeconds - pp) / Double(totalRestSeconds)
+                let remainingProgress = Double(timerManager.totalRestSeconds - pp) / Double(timerManager.totalRestSeconds)
                 let angleDegrees = remainingProgress * 360.0
-                let isPassed = triggeredPausePoints.contains(pp)
+                let isPassed = timerManager.triggeredPausePoints.contains(pp)
 
                 Circle()
                     .fill(isPassed ? Color.secondary : themeManager.secondaryColor)
@@ -192,11 +183,11 @@ struct ExerciseTimerView: View {
             }
 
             VStack(spacing: 8) {
-                Text(formatTime(timeRemaining))
+                Text(formatTime(timerManager.timeRemaining))
                     .font(.system(size: 56, weight: .bold, design: .rounded))
                     .monospacedDigit()
 
-                if let autoPauseMessage {
+                if let autoPauseMessage = timerManager.autoPauseMessage {
                     HStack(spacing: 4) {
                         Image(systemName: "pause.circle.fill")
                         Text(autoPauseMessage)
@@ -206,11 +197,11 @@ struct ExerciseTimerView: View {
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(themeManager.secondaryColor.opacity(0.15), in: Capsule())
-                } else if isTimerRunning && !isTimerPaused {
+                } else if timerManager.isTimerRunning && !timerManager.isTimerPaused {
                     Text("Resting...")
                         .font(.headline)
                         .foregroundStyle(themeManager.accentColor)
-                } else if isTimerPaused {
+                } else if timerManager.isTimerPaused {
                     Text("Paused")
                         .font(.headline)
                         .foregroundStyle(themeManager.secondaryColor)
@@ -232,9 +223,9 @@ struct ExerciseTimerView: View {
 
     private var timerControls: some View {
         VStack(spacing: 12) {
-            if !isTimerRunning && !isTimerPaused {
+            if !timerManager.isTimerRunning && !timerManager.isTimerPaused {
                 Button {
-                    startTimer()
+                    timerManager.startTimer(for: exercise)
                 } label: {
                     Label("Start Rest Timer", systemImage: "play.fill")
                         .font(.headline)
@@ -245,22 +236,22 @@ struct ExerciseTimerView: View {
                 .controlSize(.large)
 
                 Button("Skip Rest & Complete Set") {
-                    completeCurrentSet()
+                    timerManager.completeCurrentSet(modelContext: modelContext)
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             } else {
                 HStack(spacing: 16) {
                     Button {
-                        if isTimerPaused {
-                            resumeTimer()
+                        if timerManager.isTimerPaused {
+                            timerManager.resumeTimer()
                         } else {
-                            pauseTimer()
+                            timerManager.pauseTimer()
                         }
                     } label: {
                         Label(
-                            isTimerPaused ? "Resume" : "Pause",
-                            systemImage: isTimerPaused ? "play.fill" : "pause.fill"
+                            timerManager.isTimerPaused ? "Resume" : "Pause",
+                            systemImage: timerManager.isTimerPaused ? "play.fill" : "pause.fill"
                         )
                         .frame(maxWidth: .infinity)
                     }
@@ -268,7 +259,7 @@ struct ExerciseTimerView: View {
                     .controlSize(.large)
 
                     Button("Complete Set Now") {
-                        completeCurrentSet()
+                        timerManager.completeCurrentSet(modelContext: modelContext)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
@@ -278,148 +269,7 @@ struct ExerciseTimerView: View {
         .frame(maxWidth: 280)
     }
 
-    // MARK: - Timer Logic
-
-    private func startHighFrequencyTimer() {
-        timer?.invalidate()
-        let t = Timer(timeInterval: 0.03, repeats: true) { _ in
-            updateTimer()
-        }
-        RunLoop.main.add(t, forMode: .common)
-        timer = t
-    }
-
-    private func updateTimer() {
-        guard let endDate = endDate else { return }
-        let now = Date()
-        let diff = endDate.timeIntervalSince(now)
-
-        if diff > 0 {
-            timeRemaining = Int(ceil(diff))
-            progress = diff / Double(totalRestSeconds)
-
-            // Check auto-pause points
-            let elapsed = Double(totalRestSeconds) - diff
-            let sortedPausePoints = exercise.currentPausePoints.sorted()
-
-            for pp in sortedPausePoints {
-                if elapsed >= Double(pp) && !triggeredPausePoints.contains(pp) {
-                    triggeredPausePoints.insert(pp)
-
-                    // Freeze exact diff & remainingDuration
-                    remainingDuration = diff
-                    timeRemaining = Int(ceil(diff))
-                    progress = diff / Double(totalRestSeconds)
-
-                    isTimerPaused = true
-                    timer?.invalidate()
-                    timer = nil
-                    self.endDate = nil
-
-                    autoPauseMessage = "Auto-paused after \(formatSeconds(pp)) rest"
-
-                    // Audio & Haptic Feedback
-                    let generator = UINotificationFeedbackGenerator()
-                    generator.notificationOccurred(.warning)
-                    AudioServicesPlaySystemSound(1052)
-                    break
-                }
-            }
-        } else {
-            timeRemaining = 0
-            progress = 0.0
-            timer?.invalidate()
-            timer = nil
-            completeCurrentSet()
-        }
-    }
-
-    private func startTimer() {
-        let duration = Double(totalRestSeconds)
-        remainingDuration = duration
-        endDate = Date().addingTimeInterval(duration)
-
-        triggeredPausePoints.removeAll()
-        autoPauseMessage = nil
-        isTimerRunning = true
-        isTimerPaused = false
-
-        startHighFrequencyTimer()
-    }
-
-    private func pauseTimer() {
-        guard isTimerRunning && !isTimerPaused else { return }
-
-        if let endDate = endDate {
-            let diff = max(0, endDate.timeIntervalSince(Date()))
-            remainingDuration = diff
-            timeRemaining = Int(ceil(diff))
-            progress = diff / Double(totalRestSeconds)
-        }
-
-        isTimerPaused = true
-        timer?.invalidate()
-        timer = nil
-        endDate = nil
-    }
-
-    private func resumeTimer() {
-        guard isTimerRunning && isTimerPaused else { return }
-
-        autoPauseMessage = nil
-        endDate = Date().addingTimeInterval(remainingDuration)
-        isTimerPaused = false
-
-        startHighFrequencyTimer()
-    }
-
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-        isTimerRunning = false
-        isTimerPaused = false
-        endDate = nil
-        remainingDuration = Double(totalRestSeconds)
-        timeRemaining = totalRestSeconds
-        progress = 1.0
-        triggeredPausePoints.removeAll()
-        autoPauseMessage = nil
-    }
-
-    private func completeCurrentSet() {
-        stopTimer()
-
-        // Audio & Haptic Feedback
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(.success)
-        AudioServicesPlaySystemSound(1007)
-
-        // Increment completed sets count
-        let newCompleted = exercise.currentCompletedSets + 1
-        exercise.completedSets = newCompleted
-
-        // Reset timer display for the next set
-        timeRemaining = totalRestSeconds
-
-        // If completed all sets, mark exercise as completed and close window
-        if newCompleted >= exercise.sets {
-            exercise.isCompleted = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                dismiss()
-            }
-        }
-    }
-
     // MARK: - Formatting Helpers
-
-    private func formatSeconds(_ seconds: Int) -> String {
-        if seconds >= 60 {
-            let m = seconds / 60
-            let s = seconds % 60
-            return s == 0 ? "\(m)m" : "\(m)m \(s)s"
-        }
-        return "\(seconds)s"
-    }
 
     private func formatTime(_ seconds: Int) -> String {
         let mins = seconds / 60

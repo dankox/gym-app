@@ -4,6 +4,7 @@ import SwiftData
 struct ContentView: View {
     @Environment(ThemeManager.self) private var themeManager
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var importAlertMessage: String? = nil
     @State private var showImportAlert = false
@@ -25,6 +26,16 @@ struct ContentView: View {
         }
         .tint(themeManager.accentColor)
         .preferredColorScheme(themeManager.appearance.colorScheme)
+        .onAppear {
+            RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
+            } else if newPhase == .background || newPhase == .inactive {
+                RestTimerManager.shared.saveToUserDefaults()
+            }
+        }
         .onOpenURL { url in
             handleOpenURL(url)
         }
