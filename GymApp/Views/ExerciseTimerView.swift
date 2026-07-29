@@ -9,6 +9,9 @@ struct ExerciseTimerView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable var exercise: WorkoutExercise
 
+    @State private var showNextPreview: Bool = false
+    @State private var hasShownNextPreview: Bool = false
+
     private var timerManager: RestTimerManager {
         RestTimerManager.shared
     }
@@ -57,8 +60,17 @@ struct ExerciseTimerView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Exercise Details Header
-                    exerciseHeaderCard
+                    // Exercise Details Header or Next Exercise Preview
+                    ZStack {
+                        exerciseHeaderCard
+                            .opacity(showNextPreview ? 0.0 : 1.0)
+
+                        if showNextPreview, let nextEx = nextExercise {
+                            nextExerciseHeaderCard(nextEx: nextEx)
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
+                    }
+                    .clipped()
 
                     // Timer Visual Ring & Countdown
                     timerDisplay
@@ -87,6 +99,25 @@ struct ExerciseTimerView: View {
             .onAppear {
                 timerManager.prepareTimer(for: exercise)
                 timerManager.syncWithDatabase(modelContext: modelContext)
+                triggerNextPreviewIfNeeded()
+            }
+            .onChange(of: timerManager.isTimerRunning) { _, isRunning in
+                if isRunning {
+                    triggerNextPreviewIfNeeded()
+                }
+            }
+            .onChange(of: timerManager.triggeredPausePoints) { _, _ in
+                if timerManager.isTimerRunning {
+                    triggerNextPreviewIfNeeded()
+                }
+            }
+            .onChange(of: currentSetNumber) { _, _ in
+                hasShownNextPreview = false
+                triggerNextPreviewIfNeeded()
+            }
+            .onDisappear {
+                showNextPreview = false
+                hasShownNextPreview = false
             }
             .onChange(of: exercise.isCompleted) { _, isDone in
                 if isDone {
@@ -100,6 +131,53 @@ struct ExerciseTimerView: View {
 
     private var isLongReps: Bool {
         exercise.reps.trimmingCharacters(in: .whitespaces).count > 15
+    }
+
+    private var nextExercise: WorkoutExercise? {
+        if let day = exercise.workoutDay {
+            let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
+            if let currentIndex = sorted.firstIndex(where: { $0.id == exercise.id }), currentIndex + 1 < sorted.count {
+                return sorted[currentIndex + 1]
+            }
+        } else {
+            let descriptor = FetchDescriptor<WorkoutDay>()
+            if let days = try? modelContext.fetch(descriptor) {
+                for day in days {
+                    let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
+                    if let currentIndex = sorted.firstIndex(where: { $0.id == exercise.id }) {
+                        if currentIndex + 1 < sorted.count {
+                            return sorted[currentIndex + 1]
+                        }
+                    }
+                }
+            }
+        }
+        return nil
+    }
+
+    private func triggerNextPreviewIfNeeded() {
+        guard isTimerActiveForThisExercise && timerManager.isTimerRunning else { return }
+        guard currentSetNumber == exercise.sets else { return }
+        guard nextExercise != nil else { return }
+
+        // If exercise has auto-pause points (multiple rest periods), only show preview on the final rest period segment
+        let pauseCount = exercise.currentPausePoints.count
+        if pauseCount > 0 {
+            guard timerManager.triggeredPausePoints.count >= pauseCount else { return }
+        }
+
+        guard !hasShownNextPreview else { return }
+
+        hasShownNextPreview = true
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+            showNextPreview = true
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.8) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                showNextPreview = false
+            }
+        }
     }
 
     // MARK: - Exercise Header Card
@@ -131,6 +209,52 @@ struct ExerciseTimerView: View {
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(themeManager.accentColor.opacity(0.1))
+        )
+    }
+
+    private func nextExerciseHeaderCard(nextEx: WorkoutExercise) -> some View {
+        let isLong = nextEx.reps.trimmingCharacters(in: .whitespaces).count > 15
+        return VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "forward.fill")
+                    .font(.caption.bold())
+                Text("UP NEXT")
+                    .font(.caption.bold())
+            }
+            .foregroundStyle(themeManager.secondaryColor)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 3)
+            .background(themeManager.secondaryColor.opacity(0.2), in: Capsule())
+
+            Text(nextEx.name)
+                .font(.title2.bold())
+                .multilineTextAlignment(.center)
+
+            HStack(spacing: 16) {
+                detailBadge(icon: "repeat", title: "Sets", value: "\(nextEx.sets)")
+                if !isLong {
+                    detailBadge(icon: "number", title: "Reps", value: "\(nextEx.reps)")
+                }
+                detailBadge(icon: "timer", title: "Rest", value: restLabel(for: nextEx.restSeconds))
+                if !nextEx.currentPausePoints.isEmpty {
+                    detailBadge(icon: "pause.circle.fill", title: "Pauses", value: "\(nextEx.currentPausePoints.count)")
+                }
+            }
+            .padding(.top, 2)
+
+            if isLong {
+                detailBadge(icon: "number", title: "Reps", value: nextEx.reps)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(themeManager.secondaryColor.opacity(0.18))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(themeManager.secondaryColor.opacity(0.4), lineWidth: 1.5)
+                )
         )
     }
 
