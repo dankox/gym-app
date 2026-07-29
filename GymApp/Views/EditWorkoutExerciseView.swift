@@ -7,6 +7,8 @@ struct EditWorkoutExerciseView: View {
 
     @Environment(\.dismiss) private var dismiss
 
+    @FocusState private var isFieldFocused: Bool
+
     @State private var name: String = ""
     @State private var sets: Int = 3
     @State private var reps: String = "10"
@@ -21,6 +23,7 @@ struct EditWorkoutExerciseView: View {
                 Section("Exercise Name") {
                     TextField("Exercise Name", text: $name)
                         .textInputAutocapitalization(.words)
+                        .focused($isFieldFocused)
                 }
 
                 Section("Sets & Reps") {
@@ -37,11 +40,13 @@ struct EditWorkoutExerciseView: View {
                             .multilineTextAlignment(.leading)
                             .textInputAutocapitalization(.never)
                             .fixedSize()
+                            .focused($isFieldFocused)
                     }
                 }
 
                 Section("Note") {
                     TextField("Optional note (e.g. Grip width, superset details…)", text: $notes, axis: .vertical)
+                        .focused($isFieldFocused)
                 }
 
                 Section("Rest Time") {
@@ -123,9 +128,17 @@ struct EditWorkoutExerciseView: View {
                     Text("Automatically pause the rest timer after a set duration. Ideal for supersets (e.g., Push-ups + Pull-ups).")
                 }
             }
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("Edit Exercise")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        isFieldFocused = false
+                    }
+                    .fontWeight(.semibold)
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                 }

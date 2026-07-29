@@ -116,6 +116,7 @@ struct WorkoutDayEditor: View {
 
     @State private var activeTimerExercise: WorkoutExercise? = nil
     @State private var exerciseToEdit: WorkoutExercise? = nil
+    @FocusState private var isNotesFocused: Bool
 
     private var sortedExercises: [WorkoutExercise] {
         day.exercises.sorted { $0.sortOrder < $1.sortOrder }
@@ -175,8 +176,14 @@ struct WorkoutDayEditor: View {
                         ForEach(group.exercises) { exercise in
                             WorkoutExerciseRow(
                                 exercise: exercise,
-                                onEdit: { ex in exerciseToEdit = ex },
-                                onStartTimer: { ex in activeTimerExercise = ex }
+                                onEdit: { ex in
+                                    isNotesFocused = false
+                                    exerciseToEdit = ex
+                                },
+                                onStartTimer: { ex in
+                                    isNotesFocused = false
+                                    activeTimerExercise = ex
+                                }
                             )
                         }
                         .onDelete { offsets in
@@ -191,8 +198,14 @@ struct WorkoutDayEditor: View {
                     ForEach(sortedExercises) { exercise in
                         WorkoutExerciseRow(
                             exercise: exercise,
-                            onEdit: { ex in exerciseToEdit = ex },
-                            onStartTimer: { ex in activeTimerExercise = ex }
+                            onEdit: { ex in
+                                isNotesFocused = false
+                                exerciseToEdit = ex
+                            },
+                            onStartTimer: { ex in
+                                isNotesFocused = false
+                                activeTimerExercise = ex
+                            }
                         )
                     }
                     .onDelete { offsets in
@@ -208,6 +221,7 @@ struct WorkoutDayEditor: View {
                 ZStack(alignment: .topLeading) {
                     TextEditor(text: notesBinding)
                         .frame(minHeight: 110)
+                        .focused($isNotesFocused)
                     if !hasNotes {
                         Text("Add notes for this workout…")
                             .foregroundStyle(.tertiary)
@@ -221,6 +235,16 @@ struct WorkoutDayEditor: View {
             }
         }
         .listStyle(.insetGrouped)
+        .scrollDismissesKeyboard(.immediately)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done") {
+                    isNotesFocused = false
+                }
+                .fontWeight(.semibold)
+            }
+        }
         .onAppear {
             RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
             checkAutoFinish(newCount: completedCount)
