@@ -507,51 +507,58 @@ struct SingleExerciseTimerView: View {
     // MARK: - Controls
 
     private var timerControls: some View {
-        VStack(spacing: 12) {
-            if !isTimerRunning && !isTimerPaused {
-                Button {
+        HStack {
+            // Left Button: Start / Pause / Resume
+            let isPlayAction = !isTimerRunning || isTimerPaused
+            let leftIcon = isPlayAction ? "play.fill" : "pause.fill"
+            let leftColor = isPlayAction ? themeManager.accentColor : themeManager.secondaryColor
+
+            Button {
+                if !isTimerRunning && !isTimerPaused {
                     timerManager.startTimer(for: exercise)
-                } label: {
-                    Label("Start Rest Timer", systemImage: "play.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 6)
+                } else if isTimerPaused {
+                    timerManager.resumeTimer()
+                } else {
+                    timerManager.pauseTimer()
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button("Skip Rest & Complete Set") {
-                    timerManager.completeCurrentSet(for: exercise, modelContext: modelContext)
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(leftColor.opacity(0.12))
+                    Circle()
+                        .stroke(leftColor, lineWidth: 2)
+                    Image(systemName: leftIcon)
+                        .font(.title2.bold())
+                        .foregroundStyle(leftColor)
+                        .offset(x: leftIcon == "play.fill" ? 2 : 0)
                 }
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            } else {
-                HStack(spacing: 16) {
-                    Button {
-                        if isTimerPaused {
-                            timerManager.resumeTimer()
-                        } else {
-                            timerManager.pauseTimer()
-                        }
-                    } label: {
-                        Label(
-                            isTimerPaused ? "Resume" : "Pause",
-                            systemImage: isTimerPaused ? "play.fill" : "pause.fill"
-                        )
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-
-                    Button("Complete Set Now") {
-                        timerManager.completeCurrentSet(for: exercise, modelContext: modelContext)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                }
+                .frame(width: 60, height: 60)
+                .contentShape(Circle())
             }
+            .buttonStyle(.plain)
+
+            Spacer()
+
+            // Right Button: Complete Set (Skip / Complete Now)
+            Button {
+                timerManager.completeCurrentSet(for: exercise, modelContext: modelContext)
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.45))
+                    Circle()
+                        .stroke(themeManager.completedColor, lineWidth: 2)
+                    Image(systemName: "checkmark")
+                        .font(.title2.bold())
+                        .foregroundStyle(Color.secondary)
+                }
+                .frame(width: 60, height: 60)
+                .contentShape(Circle())
+            }
+            .buttonStyle(.plain)
         }
-        .frame(maxWidth: 280)
+        .frame(width: 240)
+        .padding(.top, -12)
     }
 
     // MARK: - Formatting Helpers
