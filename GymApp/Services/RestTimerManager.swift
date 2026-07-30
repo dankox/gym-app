@@ -18,6 +18,9 @@ final class RestTimerManager {
     var autoPauseMessage: String? = nil
     var triggeredPausePoints: Set<Int> = []
 
+    var lastCompletedExerciseId: String? = nil
+    var completionEventCount: Int = 0
+
     private var endDate: Date? = nil
     private var startDate: Date? = nil
     private var remainingDuration: Double = 60.0
@@ -241,6 +244,9 @@ final class RestTimerManager {
 
         let newCompleted = exercise.currentCompletedSets + 1
         exercise.completedSets = newCompleted
+
+        lastCompletedExerciseId = exercise.id
+        completionEventCount += 1
 
         if newCompleted >= exercise.sets {
             exercise.isCompleted = true

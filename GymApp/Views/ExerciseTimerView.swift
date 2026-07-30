@@ -55,6 +55,40 @@ struct ExerciseTimerView: View {
                     }
                 }
             }
+            .onChange(of: RestTimerManager.shared.isTimerPaused) { _, isPaused in
+                if isPaused, let activeId = RestTimerManager.shared.activeExerciseId {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        withAnimation(.easeInOut(duration: 0.45)) {
+                            selectedExerciseId = activeId
+                        }
+                    }
+                }
+            }
+            .onChange(of: RestTimerManager.shared.completionEventCount) { _, _ in
+                if let completedId = RestTimerManager.shared.lastCompletedExerciseId {
+                    handleTimerCompleted(for: completedId)
+                }
+            }
+        }
+    }
+
+    private func handleTimerCompleted(for completedId: String) {
+        guard let idx = allExercises.firstIndex(where: { $0.id == completedId }) else { return }
+        let completedEx = allExercises[idx]
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            if completedEx.isCompleted {
+                if idx + 1 < allExercises.count {
+                    let nextEx = allExercises[idx + 1]
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        selectedExerciseId = nextEx.id
+                    }
+                }
+            } else {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    selectedExerciseId = completedEx.id
+                }
+            }
         }
     }
 }
@@ -194,13 +228,6 @@ struct SingleExerciseTimerView: View {
         .onDisappear {
             showNextPreview = false
             hasShownNextPreview = false
-        }
-        .onChange(of: exercise.isCompleted) { _, isDone in
-            if isDone {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    dismiss()
-                }
-            }
         }
     }
 
