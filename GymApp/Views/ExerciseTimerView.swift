@@ -419,7 +419,7 @@ struct ExerciseTimerView: View {
                 .controlSize(.large)
 
                 Button("Skip Rest & Complete Set") {
-                    timerManager.completeCurrentSet(modelContext: modelContext)
+                    timerManager.completeCurrentSet(for: exercise, modelContext: modelContext)
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -442,7 +442,7 @@ struct ExerciseTimerView: View {
                     .controlSize(.large)
 
                     Button("Complete Set Now") {
-                        timerManager.completeCurrentSet(modelContext: modelContext)
+                        timerManager.completeCurrentSet(for: exercise, modelContext: modelContext)
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)

@@ -577,7 +577,7 @@ struct WorkoutExerciseRow: View {
                 Button {
                     onStartTimer(exercise)
                 } label: {
-                    let isCurrentActive = RestTimerManager.shared.activeExerciseId == exercise.id && RestTimerManager.shared.isTimerRunning
+                    let isCurrentActive = RestTimerManager.shared.activeExerciseId == exercise.id && (RestTimerManager.shared.isTimerRunning || RestTimerManager.shared.isTimerPaused)
                     let iconName = isCurrentActive
                         ? (RestTimerManager.shared.isTimerPaused ? "pause.circle.fill" : "timer.circle.fill")
                         : "play.circle.fill"

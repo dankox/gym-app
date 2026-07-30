@@ -129,7 +129,9 @@ final class RestTimerManager {
         }
 
         if isTimerRunning || isTimerPaused {
-            stopAndResetTimer()
+            // A timer for another exercise is running or paused.
+            // Do NOT stop it when merely opening another exercise's Rest Timer screen.
+            return
         }
 
         self.activeExercise = exercise
@@ -148,6 +150,9 @@ final class RestTimerManager {
     // MARK: - Timer Actions
     func startTimer(for exercise: WorkoutExercise? = nil) {
         if let exercise = exercise {
+            if activeExerciseId != exercise.id && (isTimerRunning || isTimerPaused) {
+                stopAndResetTimer()
+            }
             self.activeExercise = exercise
             self.activeExerciseId = exercise.id
         }
@@ -215,8 +220,8 @@ final class RestTimerManager {
         saveToUserDefaults()
     }
 
-    func completeCurrentSet(modelContext: ModelContext, playFeedback: Bool = true) {
-        stopHighFrequencyTimer()
+    func completeCurrentSet(for targetExercise: WorkoutExercise? = nil, modelContext: ModelContext, playFeedback: Bool = true) {
+        let exerciseToComplete = targetExercise ?? activeExercise
 
         if playFeedback {
             let generator = UINotificationFeedbackGenerator()
@@ -224,9 +229,14 @@ final class RestTimerManager {
             AudioServicesPlaySystemSound(1007)
         }
 
-        guard let exercise = activeExercise else {
+        guard let exercise = exerciseToComplete else {
             stopAndResetTimer()
             return
+        }
+
+        let isCompletingActiveTimer = (activeExerciseId == exercise.id)
+        if isCompletingActiveTimer {
+            stopHighFrequencyTimer()
         }
 
         let newCompleted = exercise.currentCompletedSets + 1
@@ -242,20 +252,24 @@ final class RestTimerManager {
                 }
             }
             try? modelContext.save()
-            stopAndResetTimer()
+            if isCompletingActiveTimer {
+                stopAndResetTimer()
+            }
         } else {
-            // Reset state for next set's rest
-            isTimerRunning = false
-            isTimerPaused = false
-            endDate = nil
-            startDate = nil
-            triggeredPausePoints.removeAll()
-            autoPauseMessage = nil
-            totalRestSeconds = max(exercise.restSeconds, 1)
-            remainingDuration = Double(totalRestSeconds)
-            timeRemaining = totalRestSeconds
-            progress = 1.0
-            saveToUserDefaults()
+            if isCompletingActiveTimer {
+                // Reset state for next set's rest
+                isTimerRunning = false
+                isTimerPaused = false
+                endDate = nil
+                startDate = nil
+                triggeredPausePoints.removeAll()
+                autoPauseMessage = nil
+                totalRestSeconds = max(exercise.restSeconds, 1)
+                remainingDuration = Double(totalRestSeconds)
+                timeRemaining = totalRestSeconds
+                progress = 1.0
+                saveToUserDefaults()
+            }
             try? modelContext.save()
         }
     }
