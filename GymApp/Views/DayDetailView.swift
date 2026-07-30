@@ -148,7 +148,7 @@ struct WorkoutDayEditor: View {
         return groups
     }
 
-    // Bridge optional String? to the String that TextEditor requires.
+    // Bridge optional String? to the String that TextField requires.
     private var notesBinding: Binding<String> {
         Binding(
             get: { day.notes ?? "" },
@@ -156,24 +156,45 @@ struct WorkoutDayEditor: View {
         )
     }
 
-    private var hasNotes: Bool { !(day.notes ?? "").isEmpty }
-
     var body: some View {
-        List {
-            // Workout Timer Section
-            workoutTimerSection
+        ScrollViewReader { proxy in
+            List {
+                // Workout Timer Section
+                workoutTimerSection
 
-            // Exercises grouped by routine
-            if sortedExercises.isEmpty {
-                Section("Exercises") {
-                    Text("No exercises")
-                        .foregroundStyle(.secondary)
-                        .italic()
-                }
-            } else if routineGroups.count > 1 || (routineGroups.count == 1 && !routineGroups[0].name.isEmpty) {
-                ForEach(routineGroups, id: \.name) { group in
+                // Exercises grouped by routine
+                if sortedExercises.isEmpty {
+                    Section("Exercises") {
+                        Text("No exercises")
+                            .foregroundStyle(.secondary)
+                            .italic()
+                    }
+                } else if routineGroups.count > 1 || (routineGroups.count == 1 && !routineGroups[0].name.isEmpty) {
+                    ForEach(routineGroups, id: \.name) { group in
+                        Section {
+                            ForEach(group.exercises) { exercise in
+                                WorkoutExerciseRow(
+                                    exercise: exercise,
+                                    onEdit: { ex in
+                                        isNotesFocused = false
+                                        exerciseToEdit = ex
+                                    },
+                                    onStartTimer: { ex in
+                                        isNotesFocused = false
+                                        activeTimerExercise = ex
+                                    }
+                                )
+                            }
+                            .onDelete { offsets in
+                                deleteExercises(in: group.exercises, at: offsets)
+                            }
+                        } header: {
+                            routineGroupHeader(name: group.name, exercises: group.exercises)
+                        }
+                    }
+                } else {
                     Section {
-                        ForEach(group.exercises) { exercise in
+                        ForEach(sortedExercises) { exercise in
                             WorkoutExerciseRow(
                                 exercise: exercise,
                                 onEdit: { ex in
@@ -187,83 +208,71 @@ struct WorkoutDayEditor: View {
                             )
                         }
                         .onDelete { offsets in
-                            deleteExercises(in: group.exercises, at: offsets)
+                            deleteExercises(in: sortedExercises, at: offsets)
                         }
                     } header: {
-                        routineGroupHeader(name: group.name, exercises: group.exercises)
+                        exercisesSectionHeader
                     }
                 }
-            } else {
-                Section {
-                    ForEach(sortedExercises) { exercise in
-                        WorkoutExerciseRow(
-                            exercise: exercise,
-                            onEdit: { ex in
-                                isNotesFocused = false
-                                exerciseToEdit = ex
-                            },
-                            onStartTimer: { ex in
-                                isNotesFocused = false
-                                activeTimerExercise = ex
-                            }
-                        )
-                    }
-                    .onDelete { offsets in
-                        deleteExercises(in: sortedExercises, at: offsets)
-                    }
-                } header: {
-                    exercisesSectionHeader
-                }
-            }
 
-            // Notes
-            Section {
-                ZStack(alignment: .topLeading) {
-                    TextEditor(text: notesBinding)
-                        .frame(minHeight: 110)
+                // Notes
+                Section {
+                    TextField("Add notes for this workout…", text: notesBinding, axis: .vertical)
+                        .lineLimit(4...20)
                         .focused($isNotesFocused)
-                    if !hasNotes {
-                        Text("Add notes for this workout…")
-                            .foregroundStyle(.tertiary)
-                            .padding(.top, 8)
-                            .padding(.leading, 5)
-                            .allowsHitTesting(false)
+                        .id("notesField")
+                } header: {
+                    Text("Notes")
+                }
+                .id("notesSection")
+            }
+            .listStyle(.insetGrouped)
+            .scrollDismissesKeyboard(.immediately)
+            .onChange(of: isNotesFocused) { _, isFocused in
+                if isFocused {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            proxy.scrollTo("notesSection", anchor: .bottom)
+                        }
                     }
                 }
-            } header: {
-                Text("Notes")
             }
-        }
-        .listStyle(.insetGrouped)
-        .scrollDismissesKeyboard(.immediately)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Done") {
-                    isNotesFocused = false
+            .onChange(of: day.notes) { _, _ in
+                if isNotesFocused {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        proxy.scrollTo("notesSection", anchor: .bottom)
+                    }
                 }
-                .fontWeight(.semibold)
             }
-        }
-        .onAppear {
-            RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
-            checkAutoFinish(newCount: completedCount)
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        isNotesFocused = false
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
                 RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
-            } else if newPhase == .background || newPhase == .inactive {
-                RestTimerManager.shared.saveToUserDefaults()
+                checkAutoFinish(newCount: completedCount)
             }
-        }
-        .onChange(of: completedCount) { _, newCount in
-            checkAutoFinish(newCount: newCount)
-        }
-        .sheet(item: $activeTimerExercise) { exercise in
-            ExerciseTimerView(exercise: exercise)
-        }
-        .sheet(item: $exerciseToEdit) { exercise in
-            EditWorkoutExerciseView(exercise: exercise)
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
+                } else if newPhase == .background || newPhase == .inactive {
+                    RestTimerManager.shared.saveToUserDefaults()
+                }
+            }
+            .onChange(of: completedCount) { _, newCount in
+                checkAutoFinish(newCount: newCount)
+            }
+            .sheet(item: $activeTimerExercise) { exercise in
+                ExerciseTimerView(exercise: exercise)
+            }
+            .sheet(item: $exerciseToEdit) { exercise in
+                EditWorkoutExerciseView(exercise: exercise)
+            }
         }
     }
 
