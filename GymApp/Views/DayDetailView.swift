@@ -406,6 +406,7 @@ struct WorkoutDayEditor: View {
         let elapsed = max(1, Int(Date().timeIntervalSince(startTime)))
         day.durationSeconds = elapsed
         day.workoutStartTime = nil
+        day.appendWorkoutDurationNote(durationSeconds: elapsed)
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
     }
@@ -422,6 +423,7 @@ struct WorkoutDayEditor: View {
             let elapsed = max(1, Int(Date().timeIntervalSince(startTime)))
             day.durationSeconds = elapsed
             day.workoutStartTime = nil
+            day.appendWorkoutDurationNote(durationSeconds: elapsed)
             let generator = UINotificationFeedbackGenerator()
             generator.notificationOccurred(.success)
         }

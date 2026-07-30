@@ -255,6 +255,7 @@ final class RestTimerManager {
                     let elapsed = max(1, Int(Date().timeIntervalSince(day.workoutStartTime!)))
                     day.durationSeconds = elapsed
                     day.workoutStartTime = nil
+                    day.appendWorkoutDurationNote(durationSeconds: elapsed)
                 }
             }
             try? modelContext.save()
