@@ -7,7 +7,68 @@ struct ExerciseTimerView: View {
     @Environment(ThemeManager.self) private var themeManager
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+
+    let initialExercise: WorkoutExercise
+    @State private var selectedExerciseId: String
+
+    init(exercise: WorkoutExercise) {
+        self.initialExercise = exercise
+        _selectedExerciseId = State(initialValue: exercise.id)
+    }
+
+    private var allExercises: [WorkoutExercise] {
+        if let day = initialExercise.workoutDay {
+            let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
+            if !sorted.isEmpty { return sorted }
+        }
+        let descriptor = FetchDescriptor<WorkoutDay>()
+        if let days = try? modelContext.fetch(descriptor) {
+            for day in days {
+                let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
+                if sorted.contains(where: { $0.id == initialExercise.id }) {
+                    return sorted
+                }
+            }
+        }
+        return [initialExercise]
+    }
+
+    var body: some View {
+        NavigationStack {
+            TabView(selection: $selectedExerciseId) {
+                ForEach(Array(allExercises.enumerated()), id: \.element.id) { index, ex in
+                    SingleExerciseTimerView(
+                        exercise: ex,
+                        exerciseIndex: index,
+                        totalExercises: allExercises.count
+                    )
+                    .tag(ex.id)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .navigationTitle("Rest Timer")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Single Exercise Timer Page
+
+struct SingleExerciseTimerView: View {
+    @Environment(ThemeManager.self) private var themeManager
+    @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Bindable var exercise: WorkoutExercise
+
+    let exerciseIndex: Int
+    let totalExercises: Int
 
     @State private var showNextPreview: Bool = false
     @State private var hasShownNextPreview: Bool = false
@@ -57,73 +118,87 @@ struct ExerciseTimerView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Exercise Details Header or Next Exercise Preview
-                    ZStack {
-                        exerciseHeaderCard
-                            .opacity(showNextPreview ? 0.0 : 1.0)
+        ScrollView {
+            VStack(spacing: 20) {
+                // Exercise Page Indicator (if multiple exercises)
+                if totalExercises > 1 {
+                    HStack(spacing: 8) {
+                        if exerciseIndex > 0 {
+                            Image(systemName: "chevron.left")
+                                .font(.caption.bold())
+                                .foregroundStyle(themeManager.accentColor)
+                        } else {
+                            Spacer().frame(width: 12)
+                        }
 
-                        if showNextPreview, let nextEx = nextExercise {
-                            nextExerciseHeaderCard(nextEx: nextEx)
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        Text("Exercise \(exerciseIndex + 1) of \(totalExercises)")
+                            .font(.caption.bold())
+                            .foregroundStyle(.secondary)
+
+                        if exerciseIndex < totalExercises - 1 {
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(themeManager.accentColor)
+                        } else {
+                            Spacer().frame(width: 12)
                         }
                     }
-                    .clipped()
+                }
 
-                    // Timer Visual Ring & Countdown
-                    timerDisplay
+                // Exercise Details Header or Next Exercise Preview
+                ZStack {
+                    exerciseHeaderCard
+                        .opacity(showNextPreview ? 0.0 : 1.0)
+
+                    if showNextPreview, let nextEx = nextExercise {
+                        nextExerciseHeaderCard(nextEx: nextEx)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
+                }
+                .clipped()
+
+                // Timer Visual Ring & Countdown
+                timerDisplay
+                    .padding(.top, 4)
+
+                // Control Buttons
+                timerControls
+
+                // Exercise Notes (under timer controls)
+                if !exercise.currentNotes.isEmpty {
+                    exerciseNoteCard
                         .padding(.top, 4)
-
-                    // Control Buttons
-                    timerControls
-
-                    // Exercise Notes (under timer controls)
-                    if !exercise.currentNotes.isEmpty {
-                        exerciseNoteCard
-                            .padding(.top, 4)
-                    }
-                }
-                .padding()
-            }
-            .navigationTitle("Rest Timer")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") {
-                        dismiss()
-                    }
                 }
             }
-            .onAppear {
-                timerManager.prepareTimer(for: exercise)
-                timerManager.syncWithDatabase(modelContext: modelContext)
+            .padding()
+        }
+        .onAppear {
+            timerManager.prepareTimer(for: exercise)
+            timerManager.syncWithDatabase(modelContext: modelContext)
+            triggerNextPreviewIfNeeded()
+        }
+        .onChange(of: timerManager.isTimerRunning) { _, isRunning in
+            if isRunning {
                 triggerNextPreviewIfNeeded()
             }
-            .onChange(of: timerManager.isTimerRunning) { _, isRunning in
-                if isRunning {
-                    triggerNextPreviewIfNeeded()
-                }
-            }
-            .onChange(of: timerManager.isTimerPaused) { _, isPaused in
-                if !isPaused {
-                    triggerNextPreviewIfNeeded()
-                }
-            }
-            .onChange(of: currentSetNumber) { _, _ in
-                hasShownNextPreview = false
+        }
+        .onChange(of: timerManager.isTimerPaused) { _, isPaused in
+            if !isPaused {
                 triggerNextPreviewIfNeeded()
             }
-            .onDisappear {
-                showNextPreview = false
-                hasShownNextPreview = false
-            }
-            .onChange(of: exercise.isCompleted) { _, isDone in
-                if isDone {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        dismiss()
-                    }
+        }
+        .onChange(of: currentSetNumber) { _, _ in
+            hasShownNextPreview = false
+            triggerNextPreviewIfNeeded()
+        }
+        .onDisappear {
+            showNextPreview = false
+            hasShownNextPreview = false
+        }
+        .onChange(of: exercise.isCompleted) { _, isDone in
+            if isDone {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    dismiss()
                 }
             }
         }
