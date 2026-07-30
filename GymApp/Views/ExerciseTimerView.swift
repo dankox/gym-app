@@ -106,8 +106,8 @@ struct ExerciseTimerView: View {
                     triggerNextPreviewIfNeeded()
                 }
             }
-            .onChange(of: timerManager.triggeredPausePoints) { _, _ in
-                if timerManager.isTimerRunning {
+            .onChange(of: timerManager.isTimerPaused) { _, isPaused in
+                if !isPaused {
                     triggerNextPreviewIfNeeded()
                 }
             }
@@ -156,7 +156,7 @@ struct ExerciseTimerView: View {
     }
 
     private func triggerNextPreviewIfNeeded() {
-        guard isTimerActiveForThisExercise && timerManager.isTimerRunning else { return }
+        guard isTimerActiveForThisExercise && timerManager.isTimerRunning && !timerManager.isTimerPaused else { return }
         guard currentSetNumber == exercise.sets else { return }
         guard nextExercise != nil else { return }
 
