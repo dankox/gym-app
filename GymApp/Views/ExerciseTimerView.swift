@@ -410,7 +410,11 @@ struct SingleExerciseTimerView: View {
     // MARK: - Timer Ring & Display
 
     private var activeTimerColor: Color {
-        isTimerPaused ? themeManager.secondaryColor : themeManager.accentColor
+        isTimerActiveForThisExercise && !timerManager.isTimerPaused ? themeManager.accentColor : themeManager.secondaryColor
+    }
+
+    private var displayPause: Bool {
+        isTimerRunning ? (isTimerPaused ? false : true) : false
     }
 
     private var timerDisplay: some View {
@@ -423,9 +427,9 @@ struct SingleExerciseTimerView: View {
                     .stroke(activeTimerColor.opacity(0.2), lineWidth: 16)
 
                 // Faded Background Play/Pause Icon
-                Image(systemName: isTimerRunning ? (isTimerPaused ? "play.fill" : "pause.fill") : "play.fill")
+                Image(systemName: displayPause ? "pause.fill" : "play.fill")
                     .font(.system(size: 110, weight: .bold))
-                    .foregroundStyle(activeTimerColor.opacity(0.12))
+                    .foregroundStyle(displayPause ? themeManager.secondaryColor.opacity(0.12) : themeManager.accentColor.opacity(0.12))
                     .offset(x: !isTimerRunning ? 5 : 0)
 
                 // Progress Ring
