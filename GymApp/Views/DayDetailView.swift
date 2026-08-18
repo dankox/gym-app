@@ -268,7 +268,7 @@ struct WorkoutDayEditor: View {
                 checkAutoFinish(newCount: newCount)
             }
             .sheet(item: $activeTimerExercise) { exercise in
-                ExerciseTimerView(exercise: exercise)
+                ExerciseTimerView(exercise: exercise, workoutDay: day)
             }
             .sheet(item: $exerciseToEdit) { exercise in
                 EditWorkoutExerciseView(exercise: exercise)

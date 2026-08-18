@@ -9,15 +9,17 @@ struct ExerciseTimerView: View {
     @Environment(\.dismiss) private var dismiss
 
     let initialExercise: WorkoutExercise
+    let workoutDay: WorkoutDay?
     @State private var selectedExerciseId: String
 
-    init(exercise: WorkoutExercise) {
+    init(exercise: WorkoutExercise, workoutDay: WorkoutDay? = nil) {
         self.initialExercise = exercise
+        self.workoutDay = workoutDay ?? exercise.workoutDay
         _selectedExerciseId = State(initialValue: exercise.id)
     }
 
     private var allExercises: [WorkoutExercise] {
-        if let day = initialExercise.workoutDay {
+        if let day = workoutDay ?? initialExercise.workoutDay {
             let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
             if !sorted.isEmpty { return sorted }
         }
@@ -54,6 +56,9 @@ struct ExerciseTimerView: View {
                         dismiss()
                     }
                 }
+            }
+            .onAppear {
+                RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
             }
             .onChange(of: RestTimerManager.shared.isTimerPaused) { _, isPaused in
                 if isPaused, let activeId = RestTimerManager.shared.activeExerciseId {
@@ -214,6 +219,10 @@ struct SingleExerciseTimerView: View {
         .onChange(of: timerManager.isTimerRunning) { _, isRunning in
             if isRunning {
                 triggerNextPreviewIfNeeded()
+            } else {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    showNextPreview = false
+                }
             }
         }
         .onChange(of: timerManager.isTimerPaused) { _, isPaused in

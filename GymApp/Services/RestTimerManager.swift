@@ -245,9 +245,6 @@ final class RestTimerManager {
         let newCompleted = exercise.currentCompletedSets + 1
         exercise.completedSets = newCompleted
 
-        lastCompletedExerciseId = exercise.id
-        completionEventCount += 1
-
         if newCompleted >= exercise.sets {
             exercise.isCompleted = true
             if let day = exercise.workoutDay {
@@ -279,6 +276,9 @@ final class RestTimerManager {
             }
             try? modelContext.save()
         }
+
+        lastCompletedExerciseId = exercise.id
+        completionEventCount += 1
     }
 
     // MARK: - Update State
@@ -414,6 +414,8 @@ final class RestTimerManager {
                         exercise.isCompleted = true
                     }
                 }
+                lastCompletedExerciseId = activeId
+                completionEventCount += 1
                 stopAndResetTimer()
             } else {
                 stopAndResetTimer()
