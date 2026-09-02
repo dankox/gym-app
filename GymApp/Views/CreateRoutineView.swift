@@ -190,6 +190,7 @@ struct CreateRoutineView: View {
 // MARK: - Exercise Draft Row
 
 struct ExerciseDraftRow: View {
+    @Environment(ThemeManager.self) private var themeManager
     let draft: ExerciseDraft
 
     var body: some View {
@@ -210,6 +211,7 @@ struct ExerciseDraftRow: View {
                     Image(systemName: "note.text")
                     Text(draft.notes)
                         .lineLimit(1)
+                        .truncationMode(.tail)
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)

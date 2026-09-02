@@ -217,10 +217,13 @@ struct WorkoutDayEditor: View {
 
                 // Notes
                 Section {
-                    TextField("Add notes for this workout…", text: notesBinding, axis: .vertical)
-                        .lineLimit(4...20)
-                        .focused($isNotesFocused)
-                        .id("notesField")
+                    VStack(alignment: .leading, spacing: 10) {
+                        TextField("Add notes for this workout…", text: notesBinding, axis: .vertical)
+                            .lineLimit(4...20)
+                            .focused($isNotesFocused)
+                            .id("notesField")
+
+                    }
                 } header: {
                     Text("Notes")
                 }

@@ -26,6 +26,7 @@
 		AABB001200000012AABB0012 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001200000012BBCC0012 /* SettingsView.swift */; };
 		AABB001300000013AABB0013 /* RoutineTransferService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001300000013BBCC0013 /* RoutineTransferService.swift */; };
 		AABB001400000014AABB0014 /* RestTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001400000014BBCC0014 /* RestTimerManager.swift */; };
+		AABB001500000015AABB0015 /* RichNoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001500000015BBCC0015 /* RichNoteView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -49,6 +50,7 @@
 		BBCC001200000012BBCC0012 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		BBCC001300000013BBCC0013 /* RoutineTransferService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/RoutineTransferService.swift; sourceTree = "<group>"; };
 		BBCC001400000014BBCC0014 /* RestTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/RestTimerManager.swift; sourceTree = "<group>"; };
+		BBCC001500000015BBCC0015 /* RichNoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichNoteView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 				BBCC000F0000000FBBCC000F /* ExerciseTimerView.swift */,
 				BBCC001000000010BBCC0010 /* EditWorkoutExerciseView.swift */,
 				BBCC001200000012BBCC0012 /* SettingsView.swift */,
+				BBCC001500000015BBCC0015 /* RichNoteView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -215,6 +218,7 @@
 				AABB001200000012AABB0012 /* SettingsView.swift in Sources */,
 				AABB001300000013AABB0013 /* RoutineTransferService.swift in Sources */,
 				AABB001400000014AABB0014 /* RestTimerManager.swift in Sources */,
+				AABB001500000015AABB0015 /* RichNoteView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

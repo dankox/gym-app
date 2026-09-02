@@ -383,10 +383,12 @@ struct SingleExerciseTimerView: View {
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
 
-                Text(exercise.currentNotes)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                    .fixedSize(horizontal: false, vertical: true)
+                RichNoteView(
+                    text: exercise.currentNotes,
+                    accentColor: themeManager.accentColor,
+                    font: .subheadline,
+                    foregroundColor: .primary
+                )
             }
 
             Spacer(minLength: 0)

@@ -47,8 +47,15 @@ struct AddExerciseView: View {
                 }
 
                 Section("Note") {
-                    TextField("Optional note (e.g. Grip width, superset details…)", text: $notes, axis: .vertical)
-                        .focused($isFieldFocused)
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("Optional note (e.g. Grip width, superset details…)", text: $notes, axis: .vertical)
+                            .focused($isFieldFocused)
+
+                        Text(verbatim: "Tip: Use [Link Title](https://...) for custom link text.")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+
+                    }
                 }
 
                 Section("Rest Time") {
