@@ -116,7 +116,9 @@ struct WorkoutDayEditor: View {
 
     @State private var activeTimerExercise: WorkoutExercise? = nil
     @State private var exerciseToEdit: WorkoutExercise? = nil
-    @FocusState private var isNotesFocused: Bool
+    private func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
 
     private var sortedExercises: [WorkoutExercise] {
         day.exercises.sorted {
@@ -181,11 +183,11 @@ struct WorkoutDayEditor: View {
                                 WorkoutExerciseRow(
                                     exercise: exercise,
                                     onEdit: { ex in
-                                        isNotesFocused = false
+                                        hideKeyboard()
                                         exerciseToEdit = ex
                                     },
                                     onStartTimer: { ex in
-                                        isNotesFocused = false
+                                        hideKeyboard()
                                         activeTimerExercise = ex
                                     }
                                 )
@@ -203,11 +205,11 @@ struct WorkoutDayEditor: View {
                             WorkoutExerciseRow(
                                 exercise: exercise,
                                 onEdit: { ex in
-                                    isNotesFocused = false
+                                    hideKeyboard()
                                     exerciseToEdit = ex
                                 },
                                 onStartTimer: { ex in
-                                    isNotesFocused = false
+                                    hideKeyboard()
                                     activeTimerExercise = ex
                                 }
                             )
@@ -223,42 +225,30 @@ struct WorkoutDayEditor: View {
                 // Notes
                 Section {
                     VStack(alignment: .leading, spacing: 10) {
-                        TextField("Add notes for this workout…", text: notesBinding, axis: .vertical)
-                            .lineLimit(4...20)
-                            .focused($isNotesFocused)
-                            .id("notesField")
-
+                        GrowingTextView(
+                            text: notesBinding,
+                            placeholder: "Add notes for this workout…",
+                            minHeight: 100,
+                            tintColor: UIColor(themeManager.accentColor)
+                        )
                     }
                 } header: {
                     Text("Notes")
                 }
-                .id("notesSection")
             }
             .listStyle(.insetGrouped)
-            .scrollDismissesKeyboard(.immediately)
-            .onChange(of: isNotesFocused) { _, isFocused in
-                if isFocused {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            proxy.scrollTo("notesSection", anchor: .bottom)
-                        }
-                    }
-                }
-            }
-            .onChange(of: day.notes) { _, _ in
-                if isNotesFocused {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        proxy.scrollTo("notesSection", anchor: .bottom)
-                    }
-                }
-            }
+            .scrollDismissesKeyboard(.interactively)
+            .dismissKeyboardOnScroll()
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") {
-                        isNotesFocused = false
+                    Button {
+                        hideKeyboard()
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(themeManager.accentColor)
                     }
-                    .fontWeight(.semibold)
                 }
             }
             .onAppear {

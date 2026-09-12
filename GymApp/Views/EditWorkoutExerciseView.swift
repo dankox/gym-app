@@ -7,7 +7,13 @@ struct EditWorkoutExerciseView: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @FocusState private var isFieldFocused: Bool
+    private enum Field: Hashable {
+        case name
+        case reps
+        case notes
+    }
+
+    @FocusState private var focusedField: Field?
 
     @State private var name: String = ""
     @State private var sets: Int = 3
@@ -43,7 +49,7 @@ struct EditWorkoutExerciseView: View {
                 Section("Exercise Name") {
                     TextField("Exercise Name", text: $name)
                         .textInputAutocapitalization(.words)
-                        .focused($isFieldFocused)
+                        .focused($focusedField, equals: .name)
                 }
 
                 Section("Sets & Reps") {
@@ -52,6 +58,7 @@ struct EditWorkoutExerciseView: View {
                         Spacer()
                         Stepper("\(sets)", value: $sets, in: 1...30)
                             .fixedSize()
+                            .simultaneousGesture(TapGesture().onEnded { hideKeyboard() })
                     }
                     HStack {
                         Text("Reps")
@@ -60,14 +67,18 @@ struct EditWorkoutExerciseView: View {
                             .multilineTextAlignment(.leading)
                             .textInputAutocapitalization(.never)
                             .fixedSize()
-                            .focused($isFieldFocused)
+                            .focused($focusedField, equals: .reps)
                     }
                 }
 
                 Section("Note") {
                     VStack(alignment: .leading, spacing: 8) {
-                        TextField("Optional note (e.g. Grip width, superset details…)", text: $notes, axis: .vertical)
-                            .focused($isFieldFocused)
+                        GrowingTextView(
+                            text: $notes,
+                            placeholder: "Optional note (e.g. Grip width, superset details…)",
+                            minHeight: 75,
+                            tintColor: UIColor(themeManager.accentColor)
+                        )
 
                         Text(verbatim: "Tip: Use [Link Title](https://...) for custom link text.")
                             .font(.caption2)
@@ -95,6 +106,7 @@ struct EditWorkoutExerciseView: View {
                     }
                     .pickerStyle(.wheel)
                     .frame(height: 140)
+                    .simultaneousGesture(TapGesture().onEnded { hideKeyboard() })
                     .onChange(of: restSeconds) { _, newRest in
                         pausePoints.removeAll(where: { $0 >= newRest })
                         if newPauseSeconds >= newRest {
@@ -110,9 +122,11 @@ struct EditWorkoutExerciseView: View {
                             Spacer()
                             Stepper("\(formatSeconds(newPauseSeconds))", value: $newPauseSeconds, in: 5...max(5, restSeconds - 5), step: 5)
                                 .fixedSize()
+                                .simultaneousGesture(TapGesture().onEnded { hideKeyboard() })
                         }
 
                         Button {
+                            hideKeyboard()
                             if !pausePoints.contains(newPauseSeconds) && newPauseSeconds < restSeconds {
                                 pausePoints.append(newPauseSeconds)
                                 pausePoints.sort()
@@ -140,6 +154,7 @@ struct EditWorkoutExerciseView: View {
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                 Button(role: .destructive) {
+                                    hideKeyboard()
                                     pausePoints.removeAll(where: { $0 == pp })
                                 } label: {
                                     Image(systemName: "trash")
@@ -155,16 +170,20 @@ struct EditWorkoutExerciseView: View {
                     Text("Automatically pause the rest timer after a set duration. Ideal for supersets (e.g., Push-ups + Pull-ups).")
                 }
             }
-            .scrollDismissesKeyboard(.immediately)
+            .scrollDismissesKeyboard(.interactively)
+            .dismissKeyboardOnScroll()
             .navigationTitle("Edit Exercise")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Done") {
-                        isFieldFocused = false
+                    Button {
+                        hideKeyboard()
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(themeManager.accentColor)
                     }
-                    .fontWeight(.semibold)
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
@@ -218,6 +237,11 @@ struct EditWorkoutExerciseView: View {
                 initialPausePoints = pausePoints
             }
         }
+    }
+
+    private func hideKeyboard() {
+        focusedField = nil
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private func formatSeconds(_ seconds: Int) -> String {

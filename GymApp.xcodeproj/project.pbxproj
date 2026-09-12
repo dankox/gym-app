@@ -28,6 +28,7 @@
 		AABB001400000014AABB0014 /* Services/RestTimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001400000014BBCC0014 /* Services/RestTimerManager.swift */; };
 		AABB001500000015AABB0015 /* RichNoteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001500000015BBCC0015 /* RichNoteView.swift */; };
 		AABB001600000016AABB0016 /* SheetDismissInterceptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001600000016BBCC0016 /* SheetDismissInterceptor.swift */; };
+		AABB001700000017AABB0017 /* GrowingTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBCC001700000017BBCC0017 /* GrowingTextView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +54,7 @@
 		BBCC001400000014BBCC0014 /* Services/RestTimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/RestTimerManager.swift; sourceTree = "<group>"; };
 		BBCC001500000015BBCC0015 /* RichNoteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RichNoteView.swift; sourceTree = "<group>"; };
 		BBCC001600000016BBCC0016 /* SheetDismissInterceptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SheetDismissInterceptor.swift; sourceTree = "<group>"; };
+		BBCC001700000017BBCC0017 /* GrowingTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrowingTextView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +116,7 @@
 				BBCC001200000012BBCC0012 /* SettingsView.swift */,
 				BBCC001500000015BBCC0015 /* RichNoteView.swift */,
 				BBCC001600000016BBCC0016 /* SheetDismissInterceptor.swift */,
+				BBCC001700000017BBCC0017 /* GrowingTextView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -223,6 +226,7 @@
 				AABB001400000014AABB0014 /* Services/RestTimerManager.swift in Sources */,
 				AABB001500000015AABB0015 /* RichNoteView.swift in Sources */,
 				AABB001600000016AABB0016 /* SheetDismissInterceptor.swift in Sources */,
+				AABB001700000017AABB0017 /* GrowingTextView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

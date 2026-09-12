@@ -22,6 +22,7 @@ struct CreateRoutineView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
+    @FocusState private var isRoutineNameFocused: Bool
     @State private var routineName = ""
     @State private var drafts: [ExerciseDraft] = []
     @State private var showAddExercise = false
@@ -53,18 +54,23 @@ struct CreateRoutineView: View {
                 Section("Routine Name") {
                     TextField("e.g. Push Day, Upper Body…", text: $routineName)
                         .textInputAutocapitalization(.words)
+                        .focused($isRoutineNameFocused)
                 }
 
                 Section {
                     ForEach(drafts) { draft in
                         ExerciseDraftRow(draft: draft)
                             .contentShape(Rectangle())
-                            .onTapGesture { draftToEdit = draft }
+                            .onTapGesture {
+                                isRoutineNameFocused = false
+                                draftToEdit = draft
+                            }
                     }
                     .onMove(perform: moveDrafts)
                     .onDelete(perform: deleteDrafts)
 
                     Button {
+                        isRoutineNameFocused = false
                         showAddExercise = true
                     } label: {
                         Label("Add Exercise", systemImage: "plus.circle.fill")
@@ -78,9 +84,21 @@ struct CreateRoutineView: View {
                     }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
+            .dismissKeyboardOnScroll()
             .navigationTitle(isEditing ? "Edit Routine" : "New Routine")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button {
+                        isRoutineNameFocused = false
+                    } label: {
+                        Image(systemName: "checkmark")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(themeManager.accentColor)
+                    }
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
