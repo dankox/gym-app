@@ -3,7 +3,7 @@ import SwiftData
 
 // MARK: - Draft Model
 
-struct ExerciseDraft: Identifiable {
+struct ExerciseDraft: Identifiable, Equatable {
     var id = UUID()
     var name: String = ""
     var sets: Int = 3
@@ -28,7 +28,24 @@ struct CreateRoutineView: View {
     @State private var draftToEdit: ExerciseDraft?
     @State private var shareURLItem: IdentifiableURL? = nil
 
+    @State private var initialRoutineName = ""
+    @State private var initialDrafts: [ExerciseDraft] = []
+    @State private var isLoaded = false
+    @State private var showUnsavedChangesDialog = false
+    @State private var showNameRequiredAlert = false
+    @State private var swipeLocation: CGPoint? = nil
+
     private var isEditing: Bool { routine != nil }
+
+    private var hasUnsavedChanges: Bool {
+        guard isLoaded else { return false }
+        return routineName.trimmingCharacters(in: .whitespacesAndNewlines) != initialRoutineName.trimmingCharacters(in: .whitespacesAndNewlines)
+            || drafts != initialDrafts
+    }
+
+    private var canSave: Bool {
+        !routineName.trimmingCharacters(in: .whitespaces).isEmpty
+    }
 
     var body: some View {
         NavigationStack {
@@ -65,7 +82,9 @@ struct CreateRoutineView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
@@ -87,6 +106,36 @@ struct CreateRoutineView: View {
                         EditButton()
                     }
                 }
+            }
+            .interactiveDismissDisabled(hasUnsavedChanges)
+            .background(
+                SheetDismissInterceptor(
+                    hasUnsavedChanges: hasUnsavedChanges,
+                    onAttemptToDismiss: { location in
+                        swipeLocation = location
+                        showUnsavedChangesDialog = true
+                    }
+                )
+            )
+            .unsavedChangesOverlay(
+                isPresented: $showUnsavedChangesDialog,
+                location: swipeLocation,
+                canSave: canSave,
+                onSave: {
+                    if canSave {
+                        save()
+                    } else {
+                        showNameRequiredAlert = true
+                    }
+                },
+                onDiscard: {
+                    dismiss()
+                }
+            )
+            .alert("Routine Name Required", isPresented: $showNameRequiredAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Please enter a routine name before saving.")
             }
             .sheet(item: $shareURLItem) { item in
                 ActivityView(activityItems: [item.url])
@@ -112,11 +161,16 @@ struct CreateRoutineView: View {
     // MARK: - Load existing routine on appear
 
     func loadExistingRoutine() {
-        guard let routine else { return }
-        routineName = routine.name
-        drafts = routine.exercises
-            .sorted { $0.sortOrder < $1.sortOrder }
-            .map { ExerciseDraft(name: $0.name, sets: $0.sets, reps: $0.reps, restSeconds: $0.restSeconds, pausePoints: $0.currentPausePoints, notes: $0.currentNotes) }
+        guard !isLoaded else { return }
+        isLoaded = true
+        if let routine {
+            routineName = routine.name
+            drafts = routine.exercises
+                .sorted { $0.sortOrder < $1.sortOrder }
+                .map { ExerciseDraft(name: $0.name, sets: $0.sets, reps: $0.reps, restSeconds: $0.restSeconds, pausePoints: $0.currentPausePoints, notes: $0.currentNotes) }
+        }
+        initialRoutineName = routineName
+        initialDrafts = drafts
     }
 
     // MARK: - Export Current Routine

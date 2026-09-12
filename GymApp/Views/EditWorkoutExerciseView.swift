@@ -17,6 +17,26 @@ struct EditWorkoutExerciseView: View {
     @State private var pausePoints: [Int] = []
     @State private var newPauseSeconds: Int = 30
 
+    @State private var initialName: String = ""
+    @State private var initialSets: Int = 3
+    @State private var initialReps: String = "10"
+    @State private var initialNotes: String = ""
+    @State private var initialRestSeconds: Int = 60
+    @State private var initialPausePoints: [Int] = []
+    @State private var isLoaded: Bool = false
+    @State private var showUnsavedChangesDialog: Bool = false
+    @State private var swipeLocation: CGPoint? = nil
+
+    private var hasUnsavedChanges: Bool {
+        guard isLoaded else { return false }
+        return name.trimmingCharacters(in: .whitespacesAndNewlines) != initialName.trimmingCharacters(in: .whitespacesAndNewlines)
+            || sets != initialSets
+            || reps.trimmingCharacters(in: .whitespacesAndNewlines) != initialReps.trimmingCharacters(in: .whitespacesAndNewlines)
+            || notes.trimmingCharacters(in: .whitespacesAndNewlines) != initialNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+            || restSeconds != initialRestSeconds
+            || pausePoints != initialPausePoints
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -147,7 +167,9 @@ struct EditWorkoutExerciseView: View {
                     .fontWeight(.semibold)
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save", action: save)
@@ -155,7 +177,30 @@ struct EditWorkoutExerciseView: View {
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
+            .interactiveDismissDisabled(hasUnsavedChanges)
+            .background(
+                SheetDismissInterceptor(
+                    hasUnsavedChanges: hasUnsavedChanges,
+                    onAttemptToDismiss: { location in
+                        swipeLocation = location
+                        showUnsavedChangesDialog = true
+                    }
+                )
+            )
+            .unsavedChangesOverlay(
+                isPresented: $showUnsavedChangesDialog,
+                location: swipeLocation,
+                canSave: !name.trimmingCharacters(in: .whitespaces).isEmpty,
+                onSave: {
+                    save()
+                },
+                onDiscard: {
+                    dismiss()
+                }
+            )
             .onAppear {
+                guard !isLoaded else { return }
+                isLoaded = true
                 name = exercise.name
                 sets = exercise.sets
                 reps = exercise.reps
@@ -165,6 +210,12 @@ struct EditWorkoutExerciseView: View {
                 if let firstValid = (5...max(5, restSeconds - 5)).first(where: { !pausePoints.contains($0) }) {
                     newPauseSeconds = firstValid
                 }
+                initialName = name
+                initialSets = sets
+                initialReps = reps
+                initialNotes = notes
+                initialRestSeconds = restSeconds
+                initialPausePoints = pausePoints
             }
         }
     }

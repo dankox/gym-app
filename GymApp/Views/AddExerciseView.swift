@@ -17,7 +17,27 @@ struct AddExerciseView: View {
     @State private var pausePoints: [Int] = []
     @State private var newPauseSeconds = 30
 
+    @State private var initialName = ""
+    @State private var initialSets = 3
+    @State private var initialReps = "10"
+    @State private var initialNotes = ""
+    @State private var initialRestSeconds = 60
+    @State private var initialPausePoints: [Int] = []
+    @State private var isLoaded = false
+    @State private var showUnsavedChangesDialog = false
+    @State private var swipeLocation: CGPoint? = nil
+
     private var isEditing: Bool { draft != nil }
+
+    private var hasUnsavedChanges: Bool {
+        guard isLoaded else { return false }
+        return name.trimmingCharacters(in: .whitespacesAndNewlines) != initialName.trimmingCharacters(in: .whitespacesAndNewlines)
+            || sets != initialSets
+            || reps.trimmingCharacters(in: .whitespacesAndNewlines) != initialReps.trimmingCharacters(in: .whitespacesAndNewlines)
+            || notes.trimmingCharacters(in: .whitespacesAndNewlines) != initialNotes.trimmingCharacters(in: .whitespacesAndNewlines)
+            || restSeconds != initialRestSeconds
+            || pausePoints != initialPausePoints
+    }
 
     var body: some View {
         NavigationStack {
@@ -149,7 +169,9 @@ struct AddExerciseView: View {
                     .fontWeight(.semibold)
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Save", action: save)
@@ -157,7 +179,30 @@ struct AddExerciseView: View {
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
+            .interactiveDismissDisabled(hasUnsavedChanges)
+            .background(
+                SheetDismissInterceptor(
+                    hasUnsavedChanges: hasUnsavedChanges,
+                    onAttemptToDismiss: { location in
+                        swipeLocation = location
+                        showUnsavedChangesDialog = true
+                    }
+                )
+            )
+            .unsavedChangesOverlay(
+                isPresented: $showUnsavedChangesDialog,
+                location: swipeLocation,
+                canSave: !name.trimmingCharacters(in: .whitespaces).isEmpty,
+                onSave: {
+                    save()
+                },
+                onDiscard: {
+                    dismiss()
+                }
+            )
             .onAppear {
+                guard !isLoaded else { return }
+                isLoaded = true
                 if let draft {
                     name = draft.name
                     sets = draft.sets
@@ -169,6 +214,12 @@ struct AddExerciseView: View {
                         newPauseSeconds = firstValid
                     }
                 }
+                initialName = name
+                initialSets = sets
+                initialReps = reps
+                initialNotes = notes
+                initialRestSeconds = restSeconds
+                initialPausePoints = pausePoints
             }
         }
     }
