@@ -119,7 +119,12 @@ struct WorkoutDayEditor: View {
     @FocusState private var isNotesFocused: Bool
 
     private var sortedExercises: [WorkoutExercise] {
-        day.exercises.sorted { $0.sortOrder < $1.sortOrder }
+        day.exercises.sorted {
+            if $0.sortOrder != $1.sortOrder {
+                return $0.sortOrder < $1.sortOrder
+            }
+            return $0.id < $1.id
+        }
     }
 
     private var completedCount: Int {

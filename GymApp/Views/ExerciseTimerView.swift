@@ -10,39 +10,37 @@ struct ExerciseTimerView: View {
 
     let initialExercise: WorkoutExercise
     let workoutDay: WorkoutDay?
+    @State private var exercises: [WorkoutExercise] = []
     @State private var selectedExerciseId: String
 
     init(exercise: WorkoutExercise, workoutDay: WorkoutDay? = nil) {
         self.initialExercise = exercise
         self.workoutDay = workoutDay ?? exercise.workoutDay
         _selectedExerciseId = State(initialValue: exercise.id)
-    }
 
-    private var allExercises: [WorkoutExercise] {
-        if let day = workoutDay ?? initialExercise.workoutDay {
-            let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
-            if !sorted.isEmpty { return sorted }
-        }
-        let descriptor = FetchDescriptor<WorkoutDay>()
-        if let days = try? modelContext.fetch(descriptor) {
-            for day in days {
-                let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
-                if sorted.contains(where: { $0.id == initialExercise.id }) {
-                    return sorted
+        let day = workoutDay ?? exercise.workoutDay
+        let list: [WorkoutExercise]
+        if let day = day, !day.exercises.isEmpty {
+            list = day.exercises.sorted {
+                if $0.sortOrder != $1.sortOrder {
+                    return $0.sortOrder < $1.sortOrder
                 }
+                return $0.id < $1.id
             }
+        } else {
+            list = [exercise]
         }
-        return [initialExercise]
+        _exercises = State(initialValue: list)
     }
 
     var body: some View {
         NavigationStack {
             TabView(selection: $selectedExerciseId) {
-                ForEach(Array(allExercises.enumerated()), id: \.element.id) { index, ex in
+                ForEach(Array(exercises.enumerated()), id: \.element.id) { index, ex in
                     SingleExerciseTimerView(
                         exercise: ex,
                         exerciseIndex: index,
-                        totalExercises: allExercises.count
+                        totalExercises: exercises.count
                     )
                     .tag(ex.id)
                 }
@@ -59,9 +57,11 @@ struct ExerciseTimerView: View {
             }
             .onAppear {
                 RestTimerManager.shared.syncWithDatabase(modelContext: modelContext)
+                loadExercisesIfEmpty()
             }
             .onChange(of: RestTimerManager.shared.isTimerPaused) { _, isPaused in
-                if isPaused, let activeId = RestTimerManager.shared.activeExerciseId {
+                if isPaused, let activeId = RestTimerManager.shared.activeExerciseId,
+                   exercises.contains(where: { $0.id == activeId }) {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                         withAnimation(.easeInOut(duration: 0.45)) {
                             selectedExerciseId = activeId
@@ -77,14 +77,50 @@ struct ExerciseTimerView: View {
         }
     }
 
+    private func loadExercisesIfEmpty() {
+        if exercises.count <= 1 {
+            if let day = workoutDay ?? initialExercise.workoutDay, !day.exercises.isEmpty {
+                let sorted = day.exercises.sorted {
+                    if $0.sortOrder != $1.sortOrder {
+                        return $0.sortOrder < $1.sortOrder
+                    }
+                    return $0.id < $1.id
+                }
+                if sorted.count > exercises.count {
+                    exercises = sorted
+                }
+            } else {
+                let descriptor = FetchDescriptor<WorkoutDay>()
+                if let days = try? modelContext.fetch(descriptor) {
+                    for day in days {
+                        let sorted = day.exercises.sorted {
+                            if $0.sortOrder != $1.sortOrder {
+                                return $0.sortOrder < $1.sortOrder
+                            }
+                            return $0.id < $1.id
+                        }
+                        if sorted.contains(where: { $0.id == initialExercise.id }) && sorted.count > exercises.count {
+                            exercises = sorted
+                            break
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private func handleTimerCompleted(for completedId: String) {
-        guard let idx = allExercises.firstIndex(where: { $0.id == completedId }) else { return }
-        let completedEx = allExercises[idx]
+        guard let idx = exercises.firstIndex(where: { $0.id == completedId }) else { return }
+        let completedEx = exercises[idx]
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             if completedEx.isCompleted {
-                if idx + 1 < allExercises.count {
-                    let nextEx = allExercises[idx + 1]
+                if let nextUncompleted = exercises[(idx + 1)...].first(where: { !$0.isCompleted }) {
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        selectedExerciseId = nextUncompleted.id
+                    }
+                } else if idx + 1 < exercises.count {
+                    let nextEx = exercises[idx + 1]
                     withAnimation(.easeInOut(duration: 0.5)) {
                         selectedExerciseId = nextEx.id
                     }
@@ -246,7 +282,12 @@ struct SingleExerciseTimerView: View {
 
     private var nextExercise: WorkoutExercise? {
         if let day = exercise.workoutDay {
-            let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
+            let sorted = day.exercises.sorted {
+                if $0.sortOrder != $1.sortOrder {
+                    return $0.sortOrder < $1.sortOrder
+                }
+                return $0.id < $1.id
+            }
             if let currentIndex = sorted.firstIndex(where: { $0.id == exercise.id }), currentIndex + 1 < sorted.count {
                 return sorted[currentIndex + 1]
             }
@@ -254,7 +295,12 @@ struct SingleExerciseTimerView: View {
             let descriptor = FetchDescriptor<WorkoutDay>()
             if let days = try? modelContext.fetch(descriptor) {
                 for day in days {
-                    let sorted = day.exercises.sorted { $0.sortOrder < $1.sortOrder }
+                    let sorted = day.exercises.sorted {
+                        if $0.sortOrder != $1.sortOrder {
+                            return $0.sortOrder < $1.sortOrder
+                        }
+                        return $0.id < $1.id
+                    }
                     if let currentIndex = sorted.firstIndex(where: { $0.id == exercise.id }) {
                         if currentIndex + 1 < sorted.count {
                             return sorted[currentIndex + 1]
